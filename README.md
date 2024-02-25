@@ -1,7 +1,7 @@
 # REGCHAMP2024
 1.  Открываем Proxmox, выбираем нужную Node и переходим в раздел
     “Shell”.
-
+<img src="screenshots/2.png"/>
 2. Для того, чтобы развернуть стенд, скопируйте строку ниже и вставьте в консоль (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> или ПКМ -> Вставить):
 ```
 sh='Proxmox_RC39_2024_stand.sh';curl -OL "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh" && chmod +x $sh && ./$sh; rm -f $sh
@@ -12,7 +12,7 @@ sh='Proxmox_RC39_2024_stand.sh';curl -OL "https://raw.githubusercontent.com/Pave
 
 3. Указываем имя хранилища, которое будем использовать (по умолчанию - первое в списке)
 
-<img src="screenshots/1.png" style="width:3.57292in;height:3.22917in" />
+<img src="screenshots/1.png"/>
 
 
 > После этого ждем.
