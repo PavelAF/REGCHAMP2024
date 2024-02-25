@@ -15,8 +15,8 @@ Networking=(
 echo $'Минимально требуемое место в хранилище (только для развертывания): 100 Гб\nРекомендуется: 200 ГБ\nСписок доступных хранилищ:'
 sl=`pvesm status --enabled 1 --content images  | awk -F' ' 'NR>1{print $1" "$6}'`
 echo "$sl"  | awk -F' ' -v suffix='MGT' '{for(i=0; $2>1024 && i < length(suffix); i++) $2/=1024; print NR"\t"$1"\t"int($2)" "substr(suffix, i, 1)"B"; }' | column -t -s$'\t' -N 'Номер,Имя хранилища,Свободное место' -o$'\t' -R 1
-count=`echo "$sl" | wc -l`;until read -p $'Чтобы прервать установку, нажмите Ctrl-C\nВыберите номер хранилища (default=1): ' case; [[ "${case:=1}" =~ ^[1-9][0-9]*$ ]] && [[ "${case:=1}" -le $count ]] do true;done
-STORAGE=`echo "$sl" | awk -F' ' -v case=$case 'NR==case{print $1}'`
+count=`echo "$sl" | wc -l`;until read -p $'Чтобы прервать установку, нажмите Ctrl-C\nВыберите номер хранилища (default=1): ' switch; [[ "${switch:=1}" =~ ^[1-9][0-9]*$ ]] && [[ "${switch:=1}" -le $count ]] do true;done
+STORAGE=`echo "$sl" | awk -F' ' -v nr=$switch 'NR==nr{print $1}'`
 
 pveum role add Competitor -privs "VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network"
 pvesh create access/users --userid $comp_name@pve --password $comp_passwd --comment "Competition account"
