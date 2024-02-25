@@ -1,5 +1,5 @@
 #!/bin/bash
-trap exit INT
+trap `echo;exit` INT
 
 comp_name='Competitor1'
 comp_passwd='Competitor1'
