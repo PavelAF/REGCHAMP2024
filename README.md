@@ -2,7 +2,7 @@
 1.  Открываем Proxmox, выбираем нужную Node и переходим в раздел
     “Shell”.
 
-2. Для того, чтобы развернуть стенд, скопируйте строку ниже и вставьте в консоль (Ctrl-Shift-V или ПКМ -> Вставить):
+2. Для того, чтобы развернуть стенд, скопируйте строку ниже и вставьте в консоль (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> или ПКМ -> Вставить):
 ```
 sh='Proxmox_RC39_2024_stand.sh';curl -OL "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh" && chmod +x $sh && ./$sh; rm -f $sh
 ```
