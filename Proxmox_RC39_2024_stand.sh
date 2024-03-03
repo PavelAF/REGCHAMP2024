@@ -8,10 +8,10 @@ stand_name='RC39_2024_stand_1'
 
 declare -A Networking
 Networking=(
-	['vmbr1']='ISP<=>RTR-HQ'	['vmbr11']='ISP<=>RTR-BR'
-	['vmbr2']='RTR-HQ<=>SW-HQ'	['vmbr12']='RTR-BR<=>SW-BR'
-	['vmbr3']='SW-HQ<=>SRV-HQ'	['vmbr13']='SW-BR<=>SRV-BR'
-	['vmbr4']='SW-HQ<=>CLI-HQ'	['vmbr14']='SW-BR<=>CLI-BR'
+	['vmbr1']='ISP<=>RTR-HQ'      ['vmbr11']='ISP<=>RTR-BR'
+	['vmbr2']='RTR-HQ<=>SW-HQ'    ['vmbr12']='RTR-BR<=>SW-BR'
+	['vmbr3']='SW-HQ<=>SRV-HQ'    ['vmbr13']='SW-BR<=>SRV-BR'
+	['vmbr4']='SW-HQ<=>CLI-HQ'    ['vmbr14']='SW-BR<=>CLI-BR'
 	['vmbr5']='SW-HQ<=>CICD-HQ'
 )
 
