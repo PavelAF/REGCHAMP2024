@@ -6,6 +6,7 @@ comp_name='Competitor1'
 comp_passwd='Competitor1'
 stand_name='RC39_2024_stand_1'
 
+declare -A Networking
 Networking=(
 	['vmbr1']='ISP<=>RTR-HQ'	['vmbr11']='ISP<=>RTR-BR'
 	['vmbr2']='RTR-HQ<=>SW-HQ'	['vmbr12']='RTR-BR<=>SW-BR'
