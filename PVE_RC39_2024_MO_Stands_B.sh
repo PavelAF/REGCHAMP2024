@@ -78,7 +78,7 @@ for ((stand=$switch; stand<=$switch2; stand++))
 	#${desc}
 IFACE
 	  ifup $iface
-	  pveum acl modify /sdn/zones/localnetwork/$iface -user $comp_name -role PVEAuditor
+	  pveum acl modify /sdn/zones/localnetwork/$iface -user $comp_name$stand -role PVEAuditor
 	done
 
 	qm create $((start_num+(stand-switch)*100+0)) --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net2 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --vga serial0 --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single 
