@@ -63,9 +63,9 @@ for ((stand=$switch; stand<=$switch2; stand++))
 	curl -L $(ya_url https://disk.yandex.ru/d/xlvUKh4LTK_Pog) -o ALT_Server.vmdk
 	curl -L $(ya_url https://disk.yandex.ru/d/Vf9gwcrzDPE1FQ) -o ALT_Workstation.vmdk
 
-	for i in "${Networking[@]}"
+	for i in "${!Networking[@]}"
 	do
-	  iface=vmbr$((start_num+(stand-switch)*100+i)); desc=$i
+	  iface=vmbr$((start_num+(stand-switch)*100+i+1)); desc=Networking[$i]
 	  cat <<IFACE >> /etc/network/interfaces
 
 	auto ${iface}
@@ -79,7 +79,7 @@ IFACE
 	  pveum acl modify /sdn/zones/localnetwork/$iface -user $comp_name -role PVEAuditor
 	done
 
-	qm create $((start_num+(stand-switch)*100+0)) --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=${Networking['ISP<=>RTR-HQ']} --net2 virtio,bridge=${Networking['ISP<=>RTR-BR']} --vga serial0 --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single 
+	qm create $((start_num+(stand-switch)*100+0)) --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=vmbr${!Networking['ISP<=>RTR-HQ']} --net2 virtio,bridge=${Networking['ISP<=>RTR-BR']} --vga serial0 --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single 
 	qm importdisk $((start_num+(stand-switch)*100+0)) ISP.vmdk $STORAGE --format qcow2 
 	qm set $((start_num+(stand-switch)*100+0)) --scsi0 $STORAGE:vm-100-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: ISP is done!!!"
