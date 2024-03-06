@@ -21,8 +21,8 @@ Networking=(
 
 until read -p $'Действие: 1 - Развертывание стенда, 2 - Управление пользователями\nВыберите действие: ' switch; [[ "$switch" =~ ^[1-2]$ ]]; do true;done
 if [[ "$switch" == 2 ]]; then
-	until read -p $'Стартовый номер участника: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ "$switch" -le 100 ]]; do true;done
-	until read -p $'Конечный номер участника: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ "$switch2" -le 100 && "$switch2" -le $switch ]]; do true;done
+	until read -p $'Стартовый номер участника: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
+	until read -p $'Конечный номер участника: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -le $switch ]]; do true;done
 	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-4]$ ]]; do true;done
 	
 	list=''
@@ -45,14 +45,14 @@ fi
 echo $'\nМинимально требуемое место в хранилище (только для развертывания): 100 ГБ\nРекомендуется: 200 ГБ\nСписок доступных хранилищ:'
 sl=`pvesm status --enabled 1 --content images  | awk -F' ' 'NR>1{print $1" "$6" "$2}END{if(NR==1){exit 3}}' || (echo 'Ошибка: подходящих хранилищ не найдено'; exit 3)`
 echo "$sl"|awk -F' ' 'BEGIN{split("К|М|Г|Т",x,"|")}{for(i=1;$2>=1024&&i<length(x);i++)$2/=1024;print NR"\t"$1"\t"$3"\t"int($2)" "x[i]"Б"; }'|column -t -s$'\t' -N'Номер,Имя хранилища,Тип хранилища,Свободное место' -o$'\t' -R1
-count=`echo "$sl" | wc -l`;until read -p $'Чтобы прервать установку, нажмите Ctrl-C\nВыберите номер хранилища: ' switch; [[ "$switch" =~ ^[1-9][0-9]*$ ]] && [[ "$switch" -le $count ]]; do true;done
+count=`echo "$sl" | wc -l`;until read -p $'Чтобы прервать установку, нажмите Ctrl-C\nВыберите номер хранилища: ' switch; [[ "$switch" =~ ^[1-9][0-9]*$ ]] && [[ $switch -le $count ]]; do true;done
 STORAGE=`echo "$sl" | awk -F' ' -v nr=$switch 'NR==nr{print $1}'`
 
-until read -p $'Ввведите начальный идентификатор ВМ и bridge: ' switch; [[ "$switch" =~ ^[1-9][0-9]*$ ]] && [[ "$switch" -lt 3900 && "$switch" -ge 100 ]]; do true;done
+until read -p $'Ввведите начальный идентификатор ВМ и bridge: ' switch; [[ "$switch" =~ ^[1-9][0-9]*$ ]] && [[ $switch -lt 3900 && $switch -ge 100 ]]; do true;done
 start_num=$switch
 
-until read -p $'Ввведите стартовый номер стенда: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ "$switch" -le 100 ]]; do true;done
-until read -p $'Ввведите конечный номер стенда: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ "$switch2" -le 100 && "$switch2" -le $switch ]]; do true;done
+until read -p $'Ввведите стартовый номер стенда: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
+until read -p $'Ввведите конечный номер стенда: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -le $switch ]]; do true;done
 
 vmbr() { [ $# == 1 ] && printf '%s\n' "${Networking[@]}" | awk -v name=$1 -v id=$((start_num+(stand-switch)*100)) '$0==name{print "vmbr"NR+id}' }
 
