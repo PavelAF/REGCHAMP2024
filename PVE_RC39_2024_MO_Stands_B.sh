@@ -1,5 +1,5 @@
 #!/bin/bash
-ex() { echo; exit; }
+ex() { rm -f ISP.vmdk ALT_Server.vmdk ALT_Workstation.vmdk; echo; exit; }
 trap ex INT
 
 # exec:		sh='PVE_RC39_2024_MO_Stands_B.sh';curl -sOLH 'Cache-Control: no-cache' "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh"&&chmod +x $sh&&./$sh;rm -f $sh
@@ -54,19 +54,19 @@ start_num=$switch
 until read -p $'Ввведите стартовый номер стенда: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
 until read -p $'Ввведите конечный номер стенда: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
 
-vmbr() { [ $# == 1 ] && printf '%s\n' "${Networking[@]}" | awk -v name=$1 -v id=$((start_num+(stand-switch)*100)) '$0==name{print "vmbr"NR+id}' }
+vmbr() { [ $# == 1 ] && printf '%s\n' "${Networking[@]}" | awk -v name=$1 -v id=$((start_num+(stand-switch)*100)) '$0==name{print "vmbr"NR+id}'; }
+ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
+curl -L $(ya_url https://disk.yandex.ru/d/lyptnAHegU3ehA) -o ISP.vmdk
+curl -L $(ya_url https://disk.yandex.ru/d/xlvUKh4LTK_Pog) -o ALT_Server.vmdk
+curl -L $(ya_url https://disk.yandex.ru/d/Vf9gwcrzDPE1FQ) -o ALT_Workstation.vmdk
+
+pveum role add Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
 
 for ((stand=$switch; stand<=$switch2; stand++))
 {
-	pveum role add Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
 	pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
 	pveum pool add $stand_name$stand
 	pveum acl modify /pool/$stand_name$stand -user $comp_name$stand -role Competitor
-
-	ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
-	curl -L $(ya_url https://disk.yandex.ru/d/lyptnAHegU3ehA) -o ISP.vmdk
-	curl -L $(ya_url https://disk.yandex.ru/d/xlvUKh4LTK_Pog) -o ALT_Server.vmdk
-	curl -L $(ya_url https://disk.yandex.ru/d/Vf9gwcrzDPE1FQ) -o ALT_Workstation.vmdk
 
 	for i in "${!Networking[@]}"
 	do
@@ -140,5 +140,5 @@ IFACE
 	
 }
 
-rm -f ISP.vmdk ALT_Server.vmdk ALT_Workstation.vmdk
+ex
 
