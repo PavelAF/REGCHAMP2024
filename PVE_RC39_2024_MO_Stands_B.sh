@@ -2,7 +2,7 @@
 ex() { echo; exit; }
 trap ex INT
 
-# exec:			sh='PVE_RC39_2024_MO_Stands_B.sh';curl -sOL "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh"&&chmod +x $sh&&./$sh;rm -f $sh
+# exec:		sh='PVE_RC39_2024_MO_Stands_B.sh';curl -sOL "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh"&&chmod +x $sh&&./$sh;rm -f $sh
 
 comp_name='Competitor'
 stand_name='RCMO39_2024_stand_B_'
