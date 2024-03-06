@@ -39,6 +39,7 @@ if [[ "$switch" == 2 ]]; then
 		[ $switch3 == 4 ] && pveum user delete $comp_name$stand@pve
 	}
 	echo "$list"
+	exit
 fi
 
 echo $'\nМинимально требуемое место в хранилище (только для развертывания): 100 ГБ\nРекомендуется: 200 ГБ\nСписок доступных хранилищ:'
