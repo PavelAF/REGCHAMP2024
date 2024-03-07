@@ -83,12 +83,12 @@ IFACE
 		pveum acl modify /sdn/zones/localnetwork/$iface --users $comp_name$stand@pve --roles PVEAuditor
 	done
 
-	qm create $((start_num+(stand-switch)*100+0)) --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net2 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --vga serial0 --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
+	qm create $((start_num+(stand-switch)*100+0)) --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net2 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --vga serial0 --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single --iothread 1
 	qm importdisk $((start_num+(stand-switch)*100+0)) ISP.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+0)) --scsi0 $STORAGE:vm-100-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: ISP is done!!!"
 
-	qm create $((start_num+(stand-switch)*100+1)) --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=0 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net1 virtio,bridge=$(vmbr 'RTR-HQ<=>SW-HQ') --serial0 socket --acpi 0 --ostype l26 --scsihw virtio-scsi-single
+	qm create $((start_num+(stand-switch)*100+1)) --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net1 virtio,bridge=$(vmbr 'RTR-HQ<=>SW-HQ') --serial0 socket --ostype l26 --scsihw virtio-scsi-single
 	qm importdisk $((start_num+(stand-switch)*100+1)) vESR.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+1)) --scsi0 $STORAGE:vm-101-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: RTR-HQ is done!!!"
@@ -103,7 +103,7 @@ IFACE
 	qm set $((start_num+(stand-switch)*100+3)) --scsi0 $STORAGE:vm-103-disk-0 --scsi1 $STORAGE:1 --scsi2 $STORAGE:1 --boot order=scsi0
 	echo "$stand_name$stand: SRV-HQ is done!!!"
 
-	qm create $((start_num+(stand-switch)*100+6)) --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=0 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --net1 virtio,bridge=$(vmbr 'RTR-BR<=>SW-BR') --serial0 socket --acpi 0 --ostype l26 --scsihw virtio-scsi-single
+	qm create $((start_num+(stand-switch)*100+6)) --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --net1 virtio,bridge=$(vmbr 'RTR-BR<=>SW-BR') --serial0 socket --ostype l26 --scsihw virtio-scsi-single
 	qm importdisk $((start_num+(stand-switch)*100+6)) vESR.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+6)) --scsi0 $STORAGE:vm-106-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: RTR-BR is done!!!"
