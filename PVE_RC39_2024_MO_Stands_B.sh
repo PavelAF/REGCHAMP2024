@@ -143,7 +143,7 @@ IFACE
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: CLI-BR is done!!!"
 
-	pvesh set /pool/$stand_name$stand -vms "`seq -s, $id 1 $((id+9))`"
+	pvesh set /pool/$stand_name$stand -vms "`seq -s, $id 1 $vmid`"
 
 	echo "ALL DONE $stand_name$stand!!!"
 
