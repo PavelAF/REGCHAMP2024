@@ -55,8 +55,8 @@ until read -p $'Ввведите конечный номер стенда: ' swi
 pveum role add Competitor 2> /dev/null
 pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
 ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" --data-urlencode "path=/$2" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
-curl -L $(ya_url https://disk.yandex.ru/d/Jp6jl-4yWBdlRg ISP.qcow2) -o ISP.qcow2
-curl -L $(ya_url https://disk.yandex.ru/d/xlvUKh4LTK_Pog) -o ALT_Server.vmdk
+curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg ISP.qcow2) -o ISP.qcow2
+curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Server.qcow2) -o Alt-Server.qcow2
 curl -L $(ya_url https://disk.yandex.ru/d/Vf9gwcrzDPE1FQ) -o ALT_Workstation.vmdk
 
 netifs() { printf '%s\n' "$@" | awk -v x="$(printf '%s\n' "${Networking[@]}")" -v id=$id 'BEGIN{n=0;split(x, a); for (i in a) dict[a[i]]="vmbr"i+id} $0 in dict || $0~/^vmbr[0-9]+$/{br=(dict[$1])? dict[$1] : $1;printf " --net" n " virtio,bridge=" br;n++ }'; }
@@ -92,19 +92,19 @@ IFACE
 
 	((vmid++))
 	qm create $vmid --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-HQ' 'RTR-HQ<=>SW-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: RTR-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SW-HQ" --cores 1 --memory 1536 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-HQ<=>SW-HQ' 'SW-HQ<=>SRV-HQ' 'SW-HQ<=>CLI-HQ' 'SW-HQ<=>CICD-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
  	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: SW-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SRV-HQ" --cores 2 --memory 4096 --tags 'alt_server' --startup order=4,up=15,down=60 $(netifs 'SW-HQ<=>SRV-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --scsi1 $STORAGE:1,iothread=1 --scsi2 $STORAGE:1,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: SRV-HQ is done!!!"
 
@@ -122,19 +122,19 @@ IFACE
  
 	((vmid++))
 	qm create $vmid --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-BR' 'RTR-BR<=>SW-BR') "${vm_opts[@]}"
-	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: RTR-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SW-BR" --cores 1 --memory 1536 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-BR<=>SW-BR' 'SW-BR<=>SRV-BR' 'SW-BR<=>CLI-BR') "${vm_opts[@]}"
-	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: SW-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SRV-BR" --cores 2 --memory 2048 --tags 'alt_server' --startup order=4,up=15,down=60 $(netifs 'SW-BR<=>SRV-BR') "${vm_opts[@]}"
-	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --scsi1 $STORAGE:1,iothread=1 --scsi2 $STORAGE:1,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: SRV-BR is done!!!"
 
@@ -150,4 +150,4 @@ IFACE
 
 }
 
-#rm -f ISP.vmdk ALT_Server.vmdk ALT_Workstation.vmdk
+#rm -f ISP.vmdk Alt-Server.qcow2 ALT_Workstation.vmdk
