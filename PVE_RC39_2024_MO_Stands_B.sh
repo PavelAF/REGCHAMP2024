@@ -55,7 +55,7 @@ until read -p $'Ввведите конечный номер стенда: ' swi
 pveum role add Competitor 2> /dev/null
 pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
 ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" --data-urlencode "path=/$2" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
-curl -L $(ya_url https://disk.yandex.ru/d/lyptnAHegU3ehA) -o ISP.vmdk
+curl -L $(ya_url https://disk.yandex.ru/d/Jp6jl-4yWBdlRg ISP.qcow2) -o ISP.qcow2
 curl -L $(ya_url https://disk.yandex.ru/d/xlvUKh4LTK_Pog) -o ALT_Server.vmdk
 curl -L $(ya_url https://disk.yandex.ru/d/Vf9gwcrzDPE1FQ) -o ALT_Workstation.vmdk
 
@@ -92,13 +92,14 @@ IFACE
 
 	((vmid++))
 	qm create $vmid --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-HQ' 'RTR-HQ<=>SW-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid vESR.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: RTR-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SW-HQ" --cores 1 --memory 1536 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-HQ<=>SW-HQ' 'SW-HQ<=>SRV-HQ' 'SW-HQ<=>CLI-HQ' 'SW-HQ<=>CICD-HQ') "${vm_opts[@]}"
-	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
+	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
+ 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: SW-HQ is done!!!"
 
 	((vmid++))
@@ -121,7 +122,7 @@ IFACE
  
 	((vmid++))
 	qm create $vmid --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-BR' 'RTR-BR<=>SW-BR') "${vm_opts[@]}"
-	qm importdisk $vmid vESR.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: RTR-BR is done!!!"
 
