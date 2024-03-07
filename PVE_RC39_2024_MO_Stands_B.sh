@@ -150,4 +150,4 @@ IFACE
 
 }
 
-#rm -f ISP.vmdk Alt-Server.qcow2 Alt-Workstation.qcow2
+#rm -f ISP.qcow2 Alt-Server.qcow2 Alt-Workstation.qcow2
