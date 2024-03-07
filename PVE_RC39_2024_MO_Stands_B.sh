@@ -6,7 +6,7 @@ trap ex INT
 
 comp_name='Competitor'
 stand_name='RCMO39_2024_stand_B_'
-vm_opts=( '--serial0' socket '--agent' 1 '--ostype' l26 '--scsihw' virtio-scsi-single )
+vm_opts=( '--serial0' socket '--agent' 1 '--ostype' l26 '--scsihw' virtio-scsi-single '--cpu' 'cputype=host' )
 Networking=(
 	'ISP<=>RTR-HQ'
 	'RTR-HQ<=>SW-HQ'
