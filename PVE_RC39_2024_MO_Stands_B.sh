@@ -6,7 +6,7 @@ trap ex INT
 
 comp_name='Competitor'
 stand_name='RCMO39_2024_stand_B_'
-
+vm_opts=( --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single --iothread 1 )
 Networking=(
 	'ISP<=>RTR-HQ'
 	'RTR-HQ<=>SW-HQ'
@@ -83,7 +83,6 @@ IFACE
 		pveum acl modify /sdn/zones/localnetwork/$iface --users $comp_name$stand@pve --roles PVEAuditor
 	done
 
-	vm_opts=( --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single --iothread 1 )
  	vmid=$((start_num+(stand-switch)*100))
 	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net2 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') "$vm_opts[@]"
 	qm importdisk $vmid ISP.vmdk $STORAGE --format qcow2
