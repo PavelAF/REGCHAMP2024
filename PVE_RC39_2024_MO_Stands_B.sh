@@ -86,61 +86,61 @@ IFACE
 
  	vmid=$id
 	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs vmbr0 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "${vm_opts[@]}"
-	qm importdisk $vmid ISP.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid ISP.vmdk $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: ISP is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-HQ' 'RTR-HQ<=>SW-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: RTR-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SW-HQ" --cores 1 --memory 1536 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-HQ<=>SW-HQ' 'SW-HQ<=>SRV-HQ' 'SW-HQ<=>CLI-HQ' 'SW-HQ<=>CICD-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
  	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: SW-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SRV-HQ" --cores 2 --memory 4096 --tags 'alt_server' --startup order=4,up=15,down=60 $(netifs 'SW-HQ<=>SRV-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --scsi1 $STORAGE:1,iothread=1 --scsi2 $STORAGE:1,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: SRV-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "CLI-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-HQ<=>CLI-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: CLI-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "CICD-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-HQ<=>CICD-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: CICD-HQ is done!!!"
  
 	((vmid++))
 	qm create $vmid --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-BR' 'RTR-BR<=>SW-BR') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: RTR-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SW-BR" --cores 1 --memory 1536 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-BR<=>SW-BR' 'SW-BR<=>SRV-BR' 'SW-BR<=>CLI-BR') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: SW-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SRV-BR" --cores 2 --memory 2048 --tags 'alt_server' --startup order=4,up=15,down=60 $(netifs 'SW-BR<=>SRV-BR') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --scsi1 $STORAGE:1,iothread=1 --scsi2 $STORAGE:1,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: SRV-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "CLI-BR" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-BR<=>CLI-BR') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: CLI-BR is done!!!"
 
