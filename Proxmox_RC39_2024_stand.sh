@@ -21,10 +21,10 @@ echo "$sl"|awk -F' ' 'BEGIN{split("К|М|Г|Т",x,"|")}{for(i=1;$2>=1024&&i<leng
 count=`echo "$sl" | wc -l`;until read -p $'Чтобы прервать установку, нажмите Ctrl-C\nВыберите номер хранилища (default=1): ' switch; [[ "${switch:=1}" =~ ^[1-9][0-9]*$ ]] && [[ "${switch:=1}" -le $count ]] do true;done
 STORAGE=`echo "$sl" | awk -F' ' -v nr=$switch 'NR==nr{print $1}'`
 
-pveum role add Competitor -privs "VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network"
+pveum role add Competitor -privs "Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network"
 pvesh create access/users --userid $comp_name@pve --password $comp_passwd --comment "Competition account"
 pveum pool add $stand_name
-pveum acl modify /pool/$stand_name -user $comp_name -role Competitor
+pveum acl modify /pool/$stand_name --users $comp_name@pve --roles Competitor
 
 for i in "${!Networking[@]}"
 do
@@ -39,7 +39,7 @@ iface ${iface} inet manual
 #${desc}
 IFACE
   ifup $iface
-  pveum acl modify /sdn/zones/localnetwork/$iface -user $comp_name -role PVEAuditor
+  pveum acl modify /sdn/zones/localnetwork/$iface --users $comp_name@pve --roles PVEAuditor
 done
 
 ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
