@@ -102,6 +102,6 @@ qm set $((bame_vm_id+9)) --scsi0 $STORAGE:vm-109-disk-0 --boot order=scsi0
 echo "CLI-BR is done!!!"
 rm -f ALT_Workstation.vmdk
 
-pvesh set /pool/$stand_name -vms "`seq -s, $bame_vm_id 1 $((bame_vm_id+9))`"
+pvesh set /pools/$stand_name -vms "`seq -s, $bame_vm_id 1 $((bame_vm_id+9))`"
 
 echo "ALL DONE!!!"
