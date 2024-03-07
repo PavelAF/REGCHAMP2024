@@ -90,55 +90,55 @@ IFACE
 	echo "$stand_name$stand: ISP is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net1 virtio,bridge=$(vmbr 'RTR-HQ<=>SW-HQ') --serial0 socket --ostype l26 --scsihw virtio-scsi-single
+	qm create $vmid --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net1 virtio,bridge=$(vmbr 'RTR-HQ<=>SW-HQ') --serial0 socket --ostype l26 --scsihw virtio-scsi-single --iothread 1
 	qm importdisk $vmid vESR.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: RTR-HQ is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "SW-HQ" --cores 1 --memory 1024 --tags 'alt_server' --startup order=3,up=15,down=30 --net0 virtio,bridge=$(vmbr 'RTR-HQ<=>SW-HQ') --net1 virtio,bridge=$(vmbr 'SW-HQ<=>CLI-HQ') --net2 virtio,bridge=$(vmbr 'SW-HQ<=>CICD-HQ') --net3 virtio,bridge=$(vmbr 'SW-HQ<=>SRV-HQ') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
+	qm create $vmid --name "SW-HQ" --cores 1 --memory 1024 --tags 'alt_server' --startup order=3,up=15,down=30 --net0 virtio,bridge=$(vmbr 'RTR-HQ<=>SW-HQ') --net1 virtio,bridge=$(vmbr 'SW-HQ<=>CLI-HQ') --net2 virtio,bridge=$(vmbr 'SW-HQ<=>CICD-HQ') --net3 virtio,bridge=$(vmbr 'SW-HQ<=>SRV-HQ') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single --iothread 1
 	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: SW-HQ is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "SRV-HQ" --cores 2 --memory 4096 --tags 'alt_server' --startup order=4,up=15,down=60 --net0 virtio,bridge=$(vmbr 'SW-HQ<=>SRV-HQ') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
+	qm create $vmid --name "SRV-HQ" --cores 2 --memory 4096 --tags 'alt_server' --startup order=4,up=15,down=60 --net0 virtio,bridge=$(vmbr 'SW-HQ<=>SRV-HQ') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single --iothread 1
 	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --scsi1 $STORAGE:1 --scsi2 $STORAGE:1 --boot order=scsi0
 	echo "$stand_name$stand: SRV-HQ is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "CLI-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-HQ<=>CLI-HQ') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
+	qm create $vmid --name "CLI-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-HQ<=>CLI-HQ') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single --iothread 1
 	qm importdisk $vmid ALT_Workstation.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: CLI-HQ is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "CICD-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-HQ<=>CICD-HQ') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
+	qm create $vmid --name "CICD-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-HQ<=>CICD-HQ') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single --iothread 1
 	qm importdisk $vmid ALT_Workstation.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: CICD-HQ is done!!!"
  
 	((vmid++))
-	qm create $vmid --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --net1 virtio,bridge=$(vmbr 'RTR-BR<=>SW-BR') --serial0 socket --ostype l26 --scsihw virtio-scsi-single
+	qm create $vmid --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --net1 virtio,bridge=$(vmbr 'RTR-BR<=>SW-BR') --serial0 socket --ostype l26 --scsihw virtio-scsi-single --iothread 1
 	qm importdisk $vmid vESR.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: RTR-BR is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "SW-BR" --cores 1 --memory 1024 --tags 'alt_server' --startup order=3,up=15,down=30 --net0 virtio,bridge=$(vmbr 'RTR-BR<=>SW-BR') --net1 virtio,bridge=$(vmbr 'SW-BR<=>SRV-BR') --net2 virtio,bridge=$(vmbr 'SW-BR<=>CLI-BR') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
+	qm create $vmid --name "SW-BR" --cores 1 --memory 1024 --tags 'alt_server' --startup order=3,up=15,down=30 --net0 virtio,bridge=$(vmbr 'RTR-BR<=>SW-BR') --net1 virtio,bridge=$(vmbr 'SW-BR<=>SRV-BR') --net2 virtio,bridge=$(vmbr 'SW-BR<=>CLI-BR') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single --iothread 1
 	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: SW-BR is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "SRV-BR" --cores 2 --memory 2048 --tags 'alt_server' --startup order=4,up=15,down=60 --net0 virtio,bridge=$(vmbr 'SW-BR<=>SRV-BR') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
+	qm create $vmid --name "SRV-BR" --cores 2 --memory 2048 --tags 'alt_server' --startup order=4,up=15,down=60 --net0 virtio,bridge=$(vmbr 'SW-BR<=>SRV-BR') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single --iothread 1
 	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --scsi1 $STORAGE:1 --scsi2 $STORAGE:1 --boot order=scsi0
 	echo "$stand_name$stand: SRV-BR is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "CLI-BR" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-BR<=>CLI-BR') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
+	qm create $vmid --name "CLI-BR" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-BR<=>CLI-BR') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single --iothread 1
 	qm importdisk $vmid ALT_Workstation.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: CLI-BR is done!!!"
