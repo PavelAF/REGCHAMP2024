@@ -57,7 +57,7 @@ pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console V
 ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" --data-urlencode "path=/$2" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
 curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg ISP.qcow2) -o ISP.qcow2
 curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Server.qcow2) -o Alt-Server.qcow2
-curl -L $(ya_url https://disk.yandex.ru/d/Vf9gwcrzDPE1FQ) -o ALT_Workstation.vmdk
+curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Workstation.qcow2) -o Alt-Workstation.qcow2
 
 netifs() { printf '%s\n' "$@" | awk -v x="$(printf '%s\n' "${Networking[@]}")" -v id=$id 'BEGIN{n=0;split(x, a); for (i in a) dict[a[i]]="vmbr"i+id} $0 in dict || $0~/^vmbr[0-9]+$/{br=(dict[$1])? dict[$1] : $1;printf " --net" n " virtio,bridge=" br;n++ }'; }
 
@@ -110,13 +110,13 @@ IFACE
 
 	((vmid++))
 	qm create $vmid --name "CLI-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-HQ<=>CLI-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid ALT_Workstation.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: CLI-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "CICD-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-HQ<=>CICD-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid ALT_Workstation.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: CICD-HQ is done!!!"
  
@@ -140,7 +140,7 @@ IFACE
 
 	((vmid++))
 	qm create $vmid --name "CLI-BR" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-BR<=>CLI-BR') "${vm_opts[@]}"
-	qm importdisk $vmid ALT_Workstation.vmdk $STORAGE --format qcow2
+	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: CLI-BR is done!!!"
 
@@ -150,4 +150,4 @@ IFACE
 
 }
 
-#rm -f ISP.vmdk Alt-Server.qcow2 ALT_Workstation.vmdk
+#rm -f ISP.vmdk Alt-Server.qcow2 Alt-Workstation.qcow2
