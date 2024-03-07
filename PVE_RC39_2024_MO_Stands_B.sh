@@ -57,9 +57,9 @@ vmbr() { [ $# == 1 ] && printf '%s\n' "${Networking[@]}" | awk -v name=$1 -v id=
 pveum role add Competitor 2> /dev/null
 pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
 ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
-#curl -L $(ya_url https://disk.yandex.ru/d/lyptnAHegU3ehA) -o ISP.vmdk
-#curl -L $(ya_url https://disk.yandex.ru/d/xlvUKh4LTK_Pog) -o ALT_Server.vmdk
-#curl -L $(ya_url https://disk.yandex.ru/d/Vf9gwcrzDPE1FQ) -o ALT_Workstation.vmdk
+curl -L $(ya_url https://disk.yandex.ru/d/lyptnAHegU3ehA) -o ISP.vmdk
+curl -L $(ya_url https://disk.yandex.ru/d/xlvUKh4LTK_Pog) -o ALT_Server.vmdk
+curl -L $(ya_url https://disk.yandex.ru/d/Vf9gwcrzDPE1FQ) -o ALT_Workstation.vmdk
 
 for ((stand=$switch; stand<=$switch2; stand++))
 {
@@ -83,8 +83,6 @@ IFACE
 		pveum acl modify /sdn/zones/localnetwork/$iface --users $comp_name$stand@pve --roles PVEAuditor
 	done
 
-    echo $((start_num+(stand-switch)*100))
-    echo bridge=$(vmbr 'ISP<=>RTR-HQ')
 	qm create $((start_num+(stand-switch)*100+0)) --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net2 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --vga serial0 --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
 	qm importdisk $((start_num+(stand-switch)*100+0)) ISP.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+0)) --scsi0 $STORAGE:vm-100-disk-0 --boot order=scsi0
@@ -141,4 +139,4 @@ IFACE
 
 }
 
-rm -f ISP.vmdk ALT_Server.vmdk ALT_Workstation.vmdk
+#rm -f ISP.vmdk ALT_Server.vmdk ALT_Workstation.vmdk
