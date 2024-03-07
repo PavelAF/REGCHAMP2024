@@ -1,5 +1,5 @@
 #!/bin/bash
-ex() { rm -f ISP.vmdk ALT_Server.vmdk ALT_Workstation.vmdk; echo; exit; }
+ex() { echo; exit; }
 trap ex INT
 
 # exec:		sh='PVE_RC39_2024_MO_Stands_B.sh';curl -sOLH 'Cache-Control: no-cache' "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh"&&chmod +x $sh&&./$sh;rm -f $sh
@@ -9,9 +9,9 @@ stand_name='RCMO39_2024_stand_B_'
 
 Networking=(
 	'ISP<=>RTR-HQ'
-	'RTR-HQ<=>SW-HQ'    
-	'SW-HQ<=>SRV-HQ'    
-	'SW-HQ<=>CLI-HQ'    
+	'RTR-HQ<=>SW-HQ'
+	'SW-HQ<=>SRV-HQ'
+	'SW-HQ<=>CLI-HQ'
 	'SW-HQ<=>CICD-HQ'
 	'ISP<=>RTR-BR'
 	'RTR-BR<=>SW-BR'
@@ -24,21 +24,19 @@ if [[ "$switch" == 2 ]]; then
 	until read -p $'Стартовый номер участника: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
 	until read -p $'Конечный номер участника: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
 	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-4]$ ]]; do true;done
-	
-	list=''
+
 	for ((stand=$switch; stand<=$switch2; stand++))
 	{
 		[ $switch3 == 1 ] && pveum user modify $comp_name$stand@pve --enable 1
 		[ $switch3 == 2 ] && pveum user modify $comp_name$stand@pve --enable 0
 		[ $switch3 == 3 ] && \
-		( 
+		(
 			psswd=`tr -dc 'A-Za-z1-9' </dev/urandom | head -c 20`
-			pvesh set /access/users/ --userid $comp_name$stand@pve --password $psswd
-			list+=$'\n'"$comp_name$stand : $psswd"
+			pvesh set /access/password --userid $comp_name$stand@pve --password $psswd
+			echo $'\n'"$comp_name$stand : $psswd"
 		)
 		[ $switch3 == 4 ] && pveum user delete $comp_name$stand@pve
 	}
-	echo "$list"
 	exit
 fi
 
@@ -55,47 +53,50 @@ until read -p $'Ввведите стартовый номер стенда: ' s
 until read -p $'Ввведите конечный номер стенда: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
 
 vmbr() { [ $# == 1 ] && printf '%s\n' "${Networking[@]}" | awk -v name=$1 -v id=$((start_num+(stand-switch)*100)) '$0==name{print "vmbr"NR+id}'; }
-ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
-curl -L $(ya_url https://disk.yandex.ru/d/lyptnAHegU3ehA) -o ISP.vmdk
-curl -L $(ya_url https://disk.yandex.ru/d/xlvUKh4LTK_Pog) -o ALT_Server.vmdk
-curl -L $(ya_url https://disk.yandex.ru/d/Vf9gwcrzDPE1FQ) -o ALT_Workstation.vmdk
 
-pveum role add Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
+pveum role add Competitor 2> /dev/null
+pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
+ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
+#curl -L $(ya_url https://disk.yandex.ru/d/lyptnAHegU3ehA) -o ISP.vmdk
+#curl -L $(ya_url https://disk.yandex.ru/d/xlvUKh4LTK_Pog) -o ALT_Server.vmdk
+#curl -L $(ya_url https://disk.yandex.ru/d/Vf9gwcrzDPE1FQ) -o ALT_Workstation.vmdk
 
 for ((stand=$switch; stand<=$switch2; stand++))
 {
 	pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
 	pveum pool add $stand_name$stand
-	pveum acl modify /pool/$stand_name$stand -user $comp_name$stand -role Competitor
+	pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles Competitor
 
 	for i in "${!Networking[@]}"
 	do
-	  iface=vmbr$((start_num+(stand-switch)*100+i+1)); desc=Networking[$i]
-	  cat <<IFACE >> /etc/network/interfaces
+		iface=vmbr$((start_num+(stand-switch)*100+i+1)); desc=${Networking[$i]}
+		cat <<IFACE >> /etc/network/interfaces
 
-	auto ${iface}
-	iface ${iface} inet manual
-			bridge-ports none
-			bridge-stp off
-			bridge-fd 0
-	#${desc}
+auto ${iface}
+iface ${iface} inet manual
+	bridge-ports none
+	bridge-stp off
+	bridge-fd 0
+#${desc}
 IFACE
-	  ifup $iface
-	  pveum acl modify /sdn/zones/localnetwork/$iface -user $comp_name$stand -role PVEAuditor
+		ifup $iface
+		pveum acl modify /sdn/zones/localnetwork/$iface --users $comp_name$stand@pve --roles PVEAuditor
 	done
 
-	qm create $((start_num+(stand-switch)*100+0)) --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net2 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --vga serial0 --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single 
-	qm importdisk $((start_num+(stand-switch)*100+0)) ISP.vmdk $STORAGE --format qcow2 
+    echo $((start_num+(stand-switch)*100))
+    echo bridge=$(vmbr 'ISP<=>RTR-HQ')
+	qm create $((start_num+(stand-switch)*100+0)) --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net2 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --vga serial0 --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
+	qm importdisk $((start_num+(stand-switch)*100+0)) ISP.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+0)) --scsi0 $STORAGE:vm-100-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: ISP is done!!!"
 
 	qm create $((start_num+(stand-switch)*100+1)) --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=0 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net1 virtio,bridge=$(vmbr 'RTR-HQ<=>SW-HQ') --serial0 socket --acpi 0 --ostype l26 --scsihw virtio-scsi-single
-	qm importdisk $((start_num+(stand-switch)*100+1)) vESR.vmdk $STORAGE --format qcow2 
+	qm importdisk $((start_num+(stand-switch)*100+1)) vESR.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+1)) --scsi0 $STORAGE:vm-101-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: RTR-HQ is done!!!"
 
 	qm create $((start_num+(stand-switch)*100+2)) --name "SW-HQ" --cores 1 --memory 1024 --tags 'alt_server' --startup order=3,up=15,down=30 --net0 virtio,bridge=$(vmbr 'RTR-HQ<=>SW-HQ') --net1 virtio,bridge=$(vmbr 'SW-HQ<=>CLI-HQ') --net2 virtio,bridge=$(vmbr 'SW-HQ<=>CICD-HQ') --net3 virtio,bridge=$(vmbr 'SW-HQ<=>SRV-HQ') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
-	qm importdisk $((start_num+(stand-switch)*100+2)) ALT_Server.vmdk $STORAGE --format qcow2 
+	qm importdisk $((start_num+(stand-switch)*100+2)) ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+2)) --scsi0 $STORAGE:vm-102-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: SW-HQ is done!!!"
 
@@ -105,12 +106,12 @@ IFACE
 	echo "$stand_name$stand: SRV-HQ is done!!!"
 
 	qm create $((start_num+(stand-switch)*100+6)) --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=0 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --net1 virtio,bridge=$(vmbr 'RTR-BR<=>SW-BR') --serial0 socket --acpi 0 --ostype l26 --scsihw virtio-scsi-single
-	qm importdisk $((start_num+(stand-switch)*100+6)) vESR.vmdk $STORAGE --format qcow2 
+	qm importdisk $((start_num+(stand-switch)*100+6)) vESR.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+6)) --scsi0 $STORAGE:vm-106-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: RTR-BR is done!!!"
 
 	qm create $((start_num+(stand-switch)*100+7)) --name "SW-BR" --cores 1 --memory 1024 --tags 'alt_server' --startup order=3,up=15,down=30 --net0 virtio,bridge=$(vmbr 'RTR-BR<=>SW-BR') --net1 virtio,bridge=$(vmbr 'SW-BR<=>SRV-BR') --net2 virtio,bridge=$(vmbr 'SW-BR<=>CLI-BR') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
-	qm importdisk $((start_num+(stand-switch)*100+7)) ALT_Server.vmdk $STORAGE --format qcow2 
+	qm importdisk $((start_num+(stand-switch)*100+7)) ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+7)) --scsi0 $STORAGE:vm-107-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: SW-BR is done!!!"
 
@@ -125,20 +126,19 @@ IFACE
 	echo "$stand_name$stand: CLI-HQ is done!!!"
 
 	qm create $((start_num+(stand-switch)*100+5)) --name "CICD-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-HQ<=>CICD-HQ') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
-	qm importdisk $((start_num+(stand-switch)*100+5)) ALT_Workstation.vmdk $STORAGE --format qcow2 
+	qm importdisk $((start_num+(stand-switch)*100+5)) ALT_Workstation.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+5)) --scsi0 $STORAGE:vm-105-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: CICD-HQ is done!!!"
 
 	qm create $((start_num+(stand-switch)*100+9)) --name "CLI-BR" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-BR<=>CLI-BR') --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single
-	qm importdisk $((start_num+(stand-switch)*100+9)) ALT_Workstation.vmdk $STORAGE --format qcow2 
+	qm importdisk $((start_num+(stand-switch)*100+9)) ALT_Workstation.vmdk $STORAGE --format qcow2
 	qm set $((start_num+(stand-switch)*100+9)) --scsi0 $STORAGE:vm-109-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: CLI-BR is done!!!"
-	
+
 	pvesh set /pool/$stand_name$stand -vms "`seq -s, $((start_num+(stand-switch)*100)) 1 $((start_num+(stand-switch)*100+9))`"
 
 	echo "ALL DONE $stand_name$stand!!!"
-	
+
 }
 
-ex
-
+rm -f ISP.vmdk ALT_Server.vmdk ALT_Workstation.vmdk
