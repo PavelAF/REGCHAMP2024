@@ -53,7 +53,7 @@ until read -p $'Ввведите стартовый номер стенда: ' s
 until read -p $'Ввведите конечный номер стенда: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
 
 pveum role add Competitor 2> /dev/null
-pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
+pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
 pveum realm modify pve --comment 'Аутентификация участника соревнований' --default 1
 pveum realm modify pam --comment 'System'
 
