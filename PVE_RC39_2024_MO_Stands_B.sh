@@ -54,6 +54,9 @@ until read -p $'Ввведите конечный номер стенда: ' swi
 
 pveum role add Competitor 2> /dev/null
 pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
+pveum realm modify pve --comment 'Аутентификация участника соревнований' --default 1
+pveum realm modify pam --comment 'System'
+
 ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" --data-urlencode "path=/$2" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
 [ "$(file -b --mime-type ISP.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg ISP.qcow2) -o ISP.qcow2
 [ "$(file -b --mime-type Alt-Server.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Server.qcow2) -o Alt-Server.qcow2
