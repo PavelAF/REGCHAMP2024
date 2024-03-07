@@ -52,7 +52,7 @@ start_num=$switch
 until read -p $'Ввведите стартовый номер стенда: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
 until read -p $'Ввведите конечный номер стенда: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
 
-vmbr() { [ $# == 1 ] && printf '%s\n' "${Networking[@]}" | awk -v name=$1 -v id=$((start_num+(stand-switch)*100)) '$0==name{print "vmbr"NR+id}'; }
+netifs() { printf '%s\n' "$@" | awk -v x="$(printf '%s\n' "${Networking[@]}")" -v id=$id 'BEGIN{n=0;split(x, a); for (i in a) dict[a[i]]="vmbr"i+id} $0 in dict || $0~/^vmbr[0-9]+$/{br=(dict[$1])? dict[$1] : $1;printf " --net" n " virtio,bridge=" br;n++ }'; }
 
 pveum role add Competitor 2> /dev/null
 pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Monitor VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
@@ -67,9 +67,10 @@ for ((stand=$switch; stand<=$switch2; stand++))
 	pveum pool add $stand_name$stand
 	pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles Competitor
 
+	id=$((start_num+(stand-switch)*100)
 	for i in "${!Networking[@]}"
 	do
-		iface=vmbr$((start_num+(stand-switch)*100+i+1)); desc=${Networking[$i]}
+		iface=vmbr$((id+i+1)); desc=${Networking[$i]}
 		cat <<IFACE >> /etc/network/interfaces
 
 auto ${iface}
@@ -83,66 +84,66 @@ IFACE
 		pveum acl modify /sdn/zones/localnetwork/$iface --users $comp_name$stand@pve --roles PVEAuditor
 	done
 
- 	vmid=$((start_num+(stand-switch)*100))
-	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net2 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') "$vm_opts[@]"
+ 	vmid=$id
+	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs vmbr0 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "$vm_opts[@]"
 	qm importdisk $vmid ISP.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: ISP is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-HQ') --net1 virtio,bridge=$(vmbr 'RTR-HQ<=>SW-HQ') "$vm_opts[@]"
+	qm create $vmid --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-HQ' 'RTR-HQ<=>SW-HQ') "$vm_opts[@]"
 	qm importdisk $vmid vESR.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: RTR-HQ is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "SW-HQ" --cores 1 --memory 1024 --tags 'alt_server' --startup order=3,up=15,down=30 --net0 virtio,bridge=$(vmbr 'RTR-HQ<=>SW-HQ') --net1 virtio,bridge=$(vmbr 'SW-HQ<=>CLI-HQ') --net2 virtio,bridge=$(vmbr 'SW-HQ<=>CICD-HQ') --net3 virtio,bridge=$(vmbr 'SW-HQ<=>SRV-HQ') "$vm_opts[@]"
+	qm create $vmid --name "SW-HQ" --cores 1 --memory 1024 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-HQ<=>SW-HQ' 'SW-HQ<=>CLI-HQ' 'SW-HQ<=>CICD-HQ' 'SW-HQ<=>SRV-HQ') "$vm_opts[@]"
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: SW-HQ is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "SRV-HQ" --cores 2 --memory 4096 --tags 'alt_server' --startup order=4,up=15,down=60 --net0 virtio,bridge=$(vmbr 'SW-HQ<=>SRV-HQ') "$vm_opts[@]"
+	qm create $vmid --name "SRV-HQ" --cores 2 --memory 4096 --tags 'alt_server' --startup order=4,up=15,down=60 $(netifs 'SW-HQ<=>SRV-HQ') "$vm_opts[@]"
 	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --scsi1 $STORAGE:1 --scsi2 $STORAGE:1 --boot order=scsi0
 	echo "$stand_name$stand: SRV-HQ is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "CLI-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-HQ<=>CLI-HQ') "$vm_opts[@]"
+	qm create $vmid --name "CLI-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-HQ<=>CLI-HQ') "$vm_opts[@]"
 	qm importdisk $vmid ALT_Workstation.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: CLI-HQ is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "CICD-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-HQ<=>CICD-HQ') "$vm_opts[@]"
+	qm create $vmid --name "CICD-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-HQ<=>CICD-HQ') "$vm_opts[@]"
 	qm importdisk $vmid ALT_Workstation.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: CICD-HQ is done!!!"
  
 	((vmid++))
-	qm create $vmid --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 --net0 virtio,bridge=$(vmbr 'ISP<=>RTR-BR') --net1 virtio,bridge=$(vmbr 'RTR-BR<=>SW-BR') "$vm_opts[@]"
+	qm create $vmid --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-BR' 'RTR-BR<=>SW-BR') "$vm_opts[@]"
 	qm importdisk $vmid vESR.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: RTR-BR is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "SW-BR" --cores 1 --memory 1024 --tags 'alt_server' --startup order=3,up=15,down=30 --net0 virtio,bridge=$(vmbr 'RTR-BR<=>SW-BR') --net1 virtio,bridge=$(vmbr 'SW-BR<=>SRV-BR') --net2 virtio,bridge=$(vmbr 'SW-BR<=>CLI-BR') "$vm_opts[@]"
+	qm create $vmid --name "SW-BR" --cores 1 --memory 1024 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-BR<=>SW-BR' 'SW-BR<=>SRV-BR' 'SW-BR<=>CLI-BR') "$vm_opts[@]"
 	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: SW-BR is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "SRV-BR" --cores 2 --memory 2048 --tags 'alt_server' --startup order=4,up=15,down=60 --net0 virtio,bridge=$(vmbr 'SW-BR<=>SRV-BR') "$vm_opts[@]"
+	qm create $vmid --name "SRV-BR" --cores 2 --memory 2048 --tags 'alt_server' --startup order=4,up=15,down=60 $(netifs 'SW-BR<=>SRV-BR') "$vm_opts[@]"
 	qm importdisk $vmid ALT_Server.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --scsi1 $STORAGE:1 --scsi2 $STORAGE:1 --boot order=scsi0
 	echo "$stand_name$stand: SRV-BR is done!!!"
 
 	((vmid++))
-	qm create $vmid --name "CLI-BR" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 --net0 virtio,bridge=$(vmbr 'SW-BR<=>CLI-BR') "$vm_opts[@]"
+	qm create $vmid --name "CLI-BR" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-BR<=>CLI-BR') "$vm_opts[@]"
 	qm importdisk $vmid ALT_Workstation.vmdk $STORAGE --format qcow2
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0 --boot order=scsi0
 	echo "$stand_name$stand: CLI-BR is done!!!"
 
-	pvesh set /pool/$stand_name$stand -vms "`seq -s, $((start_num+(stand-switch)*100)) 1 $((start_num+(stand-switch)*100+9))`"
+	pvesh set /pool/$stand_name$stand -vms "`seq -s, $id 1 $((id+9))`"
 
 	echo "ALL DONE $stand_name$stand!!!"
 
