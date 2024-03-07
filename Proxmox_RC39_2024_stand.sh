@@ -42,7 +42,7 @@ IFACE
   pveum acl modify /sdn/zones/localnetwork/$iface --users $comp_name@pve --roles PVEAuditor
 done
 
-ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
+ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" --data-urlencode "path=/$2" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
 
 curl -L $(ya_url https://disk.yandex.ru/d/lyptnAHegU3ehA) -o ISP.vmdk
 qm create $bame_vm_id --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 --net0 virtio,bridge=vmbr0 --net1 virtio,bridge=${Networking['ISP<=>RTR-HQ']} --net2 virtio,bridge=${Networking['ISP<=>RTR-BR']} --serial0 socket --agent 1 --ostype l26 --scsihw virtio-scsi-single 
