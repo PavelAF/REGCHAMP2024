@@ -86,7 +86,7 @@ IFACE
 
  	vmid=$id
 	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs vmbr0 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "${vm_opts[@]}"
-	qm importdisk $vmid ISP.vmdk $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid ISP.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: ISP is done!!!"
 
