@@ -21,11 +21,11 @@ Networking=(
 	'SW-BR<=>CLI-BR'
 )
 
-until read -p $'Действие: 1 - Развертывание стенда, 2 - Управление пользователями\nВыберите действие: ' switch; [[ "$switch" =~ ^[1-2]$ ]]; do true;done
+until read -p $'Действие: 1 - Развертывание стенда, 2 - Управление пользователями/снапшотами\nВыберите действие: ' switch; [[ "$switch" =~ ^[1-2]$ ]]; do true;done
 if [[ "$switch" == 2 ]]; then
 	until read -p $'Стартовый номер участника: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
 	until read -p $'Конечный номер участника: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
-	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-4]$ ]]; do true;done
+	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей, 5 - восстановить ВМ по снапшоту Start\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-5]$ ]]; do true;done
 
 	for ((stand=$switch; stand<=$switch2; stand++))
 	{
@@ -38,6 +38,11 @@ if [[ "$switch" == 2 ]]; then
 			echo $'\n'"$comp_name$stand : $psswd"
 		)
 		[ $switch3 == 4 ] && pveum user delete $comp_name$stand@pve
+  		[ $switch3 == 5 ] && \
+		(
+			until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
+			for ((i=1; i<=9; i++)) { qm rollback $vmid Start; }
+		)
 	}
 	exit
 fi
