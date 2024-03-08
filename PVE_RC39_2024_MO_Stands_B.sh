@@ -154,4 +154,4 @@ IFACE
 }
 
 read -n 1 -p $'Удалить скачанные образа ВМ? [y|д|1]: ' switch
-[[ "$switch" =~ [yд1] ]] && rm -f ISP.qcow2 Alt-Server.qcow2 Alt-Workstation.qcow2
+[[ "$switch" =~ [yд1] ]] && rm -vf ISP.qcow2 Alt-Server.qcow2 Alt-Workstation.qcow2
