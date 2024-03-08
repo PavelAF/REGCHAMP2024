@@ -41,7 +41,7 @@ if [[ "$switch" == 2 ]]; then
   		[ $switch3 == 5 ] && \
 		(
 			until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
-			for ((i=1; i<=9; i++)) { qm rollback $vmid Start; }
+			for ((i=$start_num; i<=$start_num+9; i++)) { qm rollback $vmid Start; }
 		)
 	}
 	exit
