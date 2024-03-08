@@ -70,7 +70,7 @@ for ((stand=$switch; stand<=$switch2; stand++))
 	pveum pool add $stand_name$stand
 	pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles Competitor
 
-	id=$((start_num+(stand-switch)*100))
+	id=$((start_num+stand*100))
 	for i in "${!Networking[@]}"
 	do
 		iface=vmbr$((id+i+1)); desc=${Networking[$i]}
