@@ -46,11 +46,11 @@ if [[ "$switch" == 2 ]]; then
     		[ $switch3 == 6 ] && \
 		(
 			apt install nginx-light -y
-ip_i=`ip route get 1 |& grep -Po '\ src\ \K[0-9\.]+'`
-ip6_i=`ip route get 1::1 |& grep -Po '\ src\ \K[0-9a-f\:]+'`
-listen=`echo $ip_i$'\n'$ip6_i | awk 'BEGIN{t="    listen %s:%s ssl;\n"}NF{if($0~/:/)$0="["$0"]";printf t t,$0,443,$0,8006;}'`
+			ip_i=`ip route get 1 |& grep -Po '\ src\ \K[0-9\.]+'`
+			ip6_i=`ip route get 1::1 |& grep -Po '\ src\ \K[0-9a-f\:]+'`
+			listen=`echo $ip_i$'\n'$ip6_i | awk 'BEGIN{t="    listen %s:%s ssl;\n"}NF{if($0~/:/)$0="["$0"]";printf t t,$0,443,$0,8006;}'`
 
-cat <<CONF > /etc/nginx/conf.d/pve-proxy.conf
+			cat <<CONF > /etc/nginx/conf.d/pve-proxy.conf
 server {
 ${listen}
     server_name _;
