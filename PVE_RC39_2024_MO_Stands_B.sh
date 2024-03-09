@@ -71,13 +71,35 @@ server {
     }
 }
 CONF
+			SYSTEMD_EDITOR=tee systemctl edit nginx.service <<EOF
+[Unit]
+Requires=pve-cluster.service
+After=pve-cluster.service
+EOF
 			systemctl enable --now nginx.service
-			systemctl reload nginx.service
 			
 			echo $'ALLOW_FROM="127.0.0.1"\nDENY_FROM="all"\nPOLICY="allow"' > /etc/default/pveproxy && systemctl reload pveproxy.service
+
+			ip_e=`dig @resolver4.opendns.com myip.opendns.com +short -4 2>/dev/null || echo`
+			ip6_e=`dig @resolver4.opendns.com myip.opendns.com +short -6 2>/dev/null || echo`
 			
+			ipNames=$'127.0.0.1\n::1\n'$ip_e$'\n'$ip6_e
+			
+			until read -p $'Введите DNS-имя сервера (или оставьте пустым): ' dns_name; echo "$dns_name" | grep -Poqi '(^([а-я\w\d]{1,64}(|-+[а-я\w\d]+)(\.|$)){2,}$)|^$'; do true;done
+			
+			altNames=`echo "$ipNames" | awk 'BEGIN{n=1}NF{print "IP."n"="$0;n++}'; echo $'localhost\n'$(hostname --all-fqdns)$'\n'${dns_name,,} | awk 'BEGIN{n=1}NF{print "DNS."n"="$0;n++}'`
+			
+			mv /etc/pve/local/pve-ssl.key pve-ssl.key.backup; mv /etc/pve/local/pve-ssl.pem pve-ssl.pem.backup
+			openssl req -subj /CN=`hostname --fqdn` -new -nodes -newkey rsa:2048 -out pve-ssl.csr -keyout /etc/pve/local/pve-ssl.key
+			
+			openssl x509 -req -days 3650 -in pve-ssl.csr -CA /etc/pve/pve-root-ca.pem -CAkey /etc/pve/priv/pve-root-ca.key -CAserial /etc/pve/priv/pve-root-ca.srl -out /etc/pve/local/pve-ssl.pem -extensions EXT \
+			-extfile <(echo $'\n[EXT]\nnsComment="PVE server certificate for Prof RCMO39-2024"\nbasicConstraints=CA:FALSE\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid,issuer:always\nextendedKeyUsage=serverAuth\nkeyUsage=critical, digitalSignature, keyEncipherment\nnsCertType = server\nsubjectAltName = @alt_names\n[alt_names]'; echo "$altNames")
+			rm -f pve-ssl.csr
+
+			systemctl reload pveproxy.service nginx.service
+   			
 			openssl req -subj /CN=RCMO39-SSL-Auth -new -nodes -newkey rsa:2048 -out pve-ssl-auth.csr -keyout /etc/pve/priv/pve-ssl-auth.key
-			
+   
 			openssl x509 -req -days 3650 -in pve-ssl-auth.csr -CA /etc/pve/pve-root-ca.pem -CAkey /etc/pve/priv/pve-root-ca.key -CAserial /etc/pve/priv/pve-root-ca.srl -out /etc/pve/priv/pve-ssl-auth.pem -extensions EXT \
 			-extfile <(echo $'\n[EXT]\nnsComment="Competition participant authentication Prof RCMO39-2024"\nbasicConstraints=CA:FALSE\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid,issuer:always\nextendedKeyUsage=clientAuth\nkeyUsage=digitalSignature')
 			rm -f pve-ssl-auth.csr
