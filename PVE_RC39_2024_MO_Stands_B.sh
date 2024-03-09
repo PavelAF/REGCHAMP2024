@@ -84,8 +84,8 @@ EOF
 			
 			echo 'LISTEN_IP="127.0.0.1"' > /etc/default/pveproxy
 
-			ip_e=`dig @resolver4.opendns.com myip.opendns.com +short -4 2>/dev/null`
-			ip6_e=`dig @resolver4.opendns.com myip.opendns.com +short -6 2>/dev/null`
+			ip_e=`dig @resolver1.opendns.com myip.opendns.com +short -4 2>/dev/null`
+			ip6_e=`dig @resolver1.ipv6-sandbox.opendns.com myip.opendns.com +short -6 aaaa 2>/dev/null`
 			
 			ipNames=$'127.0.0.1\n::1\n'$ip_e$'\n'$ip6_e
 			
