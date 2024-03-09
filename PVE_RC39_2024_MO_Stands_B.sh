@@ -48,7 +48,7 @@ if [[ "$switch" == 2 ]]; then
 			apt install nginx-light -y
 ip_i=`ip route get 1 |& grep -Po '\ src\ \K[0-9\.]+'`
 ip6_i=`ip route get 1::1 |& grep -Po '\ src\ \K[0-9a-f\:]+'`
-listen=`echo $ip_i$'\n'$ip6_i | awk 'NF{print "    listen "$0":443 ssl;";print "    listen "$0":8006 ssl;"}'`
+listen=`echo $ip_i$'\n'$ip6_i | awk 'BEGIN{t="    listen %s:%s ssl;\n"}NF{if($0~/:/)$0="["$0"]";printf t t,$0,443,$0,8006;}'`
 
 cat <<CONF > /etc/nginx/conf.d/pve-proxy.conf
 server {
