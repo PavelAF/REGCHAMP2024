@@ -46,9 +46,12 @@ if [[ "$switch" == 2 ]]; then
     		[ $switch3 == 6 ] && \
 		(
 			apt install nginx-light -y
-			cat <<'CONF' > /etc/nginx/conf.d/pve-proxy.conf
+ip_i=`ip route get 1 |& grep -Po '\ src\ \K[0-9\.]+'`
+listen=`echo $ip_i$'\n'$ip6_i | awk 'NF{print "    listen "$0":443 ssl;";print "    listen "$0":8006 ssl;"}'`
+
+cat <<CONF > /etc/nginx/conf.d/pve-proxy.conf
 server {
-    listen 443 ssl;
+${listen}
     server_name _;
     ssl_certificate /etc/pve/local/pve-ssl.pem;
     ssl_certificate_key /etc/pve/local/pve-ssl.key;
@@ -78,7 +81,7 @@ After=pve-cluster.service
 EOF
 			systemctl enable --now nginx.service
 			
-			echo $'ALLOW_FROM="127.0.0.1"\nDENY_FROM="all"\nPOLICY="allow"' > /etc/default/pveproxy && systemctl reload pveproxy.service
+			echo 'LISTEN_IP="127.0.0.1"' > /etc/default/pveproxy
 
 			ip_e=`dig @resolver4.opendns.com myip.opendns.com +short -4 2>/dev/null || echo`
 			ip6_e=`dig @resolver4.opendns.com myip.opendns.com +short -6 2>/dev/null || echo`
@@ -96,7 +99,7 @@ EOF
 			-extfile <(echo $'\n[EXT]\nnsComment="PVE server certificate for Prof RCMO39-2024"\nbasicConstraints=CA:FALSE\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid,issuer:always\nextendedKeyUsage=serverAuth\nkeyUsage=critical, digitalSignature, keyEncipherment\nnsCertType = server\nsubjectAltName = @alt_names\n[alt_names]'; echo "$altNames")
 			rm -f pve-ssl.csr
 
-			systemctl reload pveproxy.service nginx.service
+			systemctl restart pveproxy.service spiceproxy.service nginx.service
    			
 			openssl req -subj /CN=RCMO39-SSL-Auth -new -nodes -newkey rsa:2048 -out pve-ssl-auth.csr -keyout /etc/pve/priv/pve-ssl-auth.key
    
