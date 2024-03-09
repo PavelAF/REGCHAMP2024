@@ -80,7 +80,7 @@ CONF
 			
 			openssl x509 -req -days 3650 -in pve-ssl-auth.csr -CA /etc/pve/pve-root-ca.pem -CAkey /etc/pve/priv/pve-root-ca.key -CAserial /etc/pve/priv/pve-root-ca.srl -out /etc/pve/priv/pve-ssl-auth.pem -extensions EXT \
 			-extfile <(echo $'\n[EXT]\nnsComment="Competition participant authentication Prof RCMO39-2024"\nbasicConstraints=CA:FALSE\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid,issuer:always\nextendedKeyUsage=clientAuth\nkeyUsage=digitalSignature')
-			rm -f pve-ssl-client.csr
+			rm -f pve-ssl-auth.csr
 			
 			openssl pkcs12 -name 'Сертификат участника соревнований Prof RCMO39-2024' -caname 'Центр сертификации соревнований Prof RCMO39-2024' -export -in /etc/pve/priv/pve-ssl-auth.pem -inkey /etc/pve/priv/pve-ssl-auth.key -certfile /etc/pve/pve-root-ca.pem -out RCMO39-ssl-auth.p12
 			
