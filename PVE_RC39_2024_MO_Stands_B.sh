@@ -52,9 +52,9 @@ server {
     server_name _;
     ssl_certificate /etc/pve/local/pve-ssl.pem;
     ssl_certificate_key /etc/pve/local/pve-ssl.key;
-	ssl_client_certificate /etc/pve/pve-root-ca.pem;
-	ssl_verify_client on;
-	keepalive_timeout 70;
+    ssl_client_certificate /etc/pve/pve-root-ca.pem;
+    ssl_verify_client on;
+    keepalive_timeout 70;
 	
     proxy_redirect off;
     location / {
@@ -62,9 +62,9 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade"; 
         proxy_pass https://localhost:8006;
-		proxy_buffering off;
-		client_max_body_size 0;
-		proxy_connect_timeout  3600s;
+        proxy_buffering off;
+        client_max_body_size 0;
+        proxy_connect_timeout  3600s;
         proxy_read_timeout  3600s;
         proxy_send_timeout  3600s;
         send_timeout  3600s;
