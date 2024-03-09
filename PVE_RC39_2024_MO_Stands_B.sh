@@ -21,11 +21,11 @@ Networking=(
 	'SW-BR<=>CLI-BR'
 )
 
-until read -p $'Действие: 1 - Развертывание стенда, 2 - Управление пользователями/снапшотами\nВыберите действие: ' switch; [[ "$switch" =~ ^[1-2]$ ]]; do true;done
+until read -p $'Действие: 1 - Развертывание стенда, 2 - Управление развертыванием: ' switch; [[ "$switch" =~ ^[1-2]$ ]]; do true;done
 if [[ "$switch" == 2 ]]; then
 	until read -p $'Стартовый номер участника: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
 	until read -p $'Конечный номер участника: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
-	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей, 5 - восстановить ВМ по снапшоту Start\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-5]$ ]]; do true;done
+	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей, \n\t5 - восстановить ВМ по снапшоту Start, 6 - Добавить SSL-аутентификацию\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-6]$ ]]; do true;done
 
 	for ((stand=$switch; stand<=$switch2; stand++))
 	{
@@ -42,6 +42,52 @@ if [[ "$switch" == 2 ]]; then
 		(
 			until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
 			for ((i=$start_num; i<=$start_num+9; i++)) { qm rollback $vmid Start; }
+		)
+    		[ $switch3 == 6 ] && \
+		(
+			apt install nginx-light -y
+			cat <<'CONF' > /etc/nginx/conf.d/pve-proxy.conf
+server {
+    listen 443 ssl;
+    server_name _;
+    ssl_certificate /etc/pve/local/pve-ssl.pem;
+    ssl_certificate_key /etc/pve/local/pve-ssl.key;
+	ssl_client_certificate /etc/pve/pve-root-ca.pem;
+	ssl_verify_client on;
+	keepalive_timeout 70;
+	
+    proxy_redirect off;
+    location / {
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade"; 
+        proxy_pass https://localhost:8006;
+		proxy_buffering off;
+		client_max_body_size 0;
+		proxy_connect_timeout  3600s;
+        proxy_read_timeout  3600s;
+        proxy_send_timeout  3600s;
+        send_timeout  3600s;
+    }
+}
+CONF
+			systemctl enable --now nginx.service
+			systemctl reload nginx.service
+			
+			echo $'ALLOW_FROM="127.0.0.1"\nDENY_FROM="all"\nPOLICY="allow"' > /etc/default/pveproxy && systemctl reload pveproxy.service
+			
+			openssl req -subj /CN=RCMO39-SSL-Auth -new -nodes -newkey rsa:2048 -out pve-ssl-auth.csr -keyout /etc/pve/priv/pve-ssl-auth.key
+			
+			openssl x509 -req -days 3650 -in pve-ssl-auth.csr -CA /etc/pve/pve-root-ca.pem -CAkey /etc/pve/priv/pve-root-ca.key -CAserial /etc/pve/priv/pve-root-ca.srl -out /etc/pve/priv/pve-ssl-auth.pem -extensions EXT \
+			-extfile <(echo $'\n[EXT]\nnsComment="Competition participant authentication Prof RCMO39-2024"\nbasicConstraints=CA:FALSE\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid,issuer:always\nextendedKeyUsage=clientAuth\nkeyUsage=digitalSignature')
+			rm -f pve-ssl-client.csr
+			
+			openssl pkcs12 -name 'Сертификат участника соревнований Prof RCMO39-2024' -caname 'Центр сертификации соревнований Prof RCMO39-2024' -export -in /etc/pve/priv/pve-ssl-auth.pem -inkey /etc/pve/priv/pve-ssl-auth.key -certfile /etc/pve/pve-root-ca.pem -out RCMO39-ssl-auth.p12
+			
+			
+			clear; cat RCMO39-ssl-auth.p12 | base64
+			echo $'\n\nСохраните строку выше как файл encode.txt, откройте cmd и введите команду:\n\ncertutil -f -decode encode.txt RCMO39-ssl-auth.p12'
+			echo $'\nЗатем разместите файл RCMO39-ssl-auth.p12 на машинах участников и установите сертификаты для текущего пользователя'
 		)
 	}
 	exit
