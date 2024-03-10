@@ -176,7 +176,7 @@ IFACE
 	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs vmbr0 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/ISP.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
- 	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
+ 	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: ISP is done!!!"
 
 	((vmid++))
