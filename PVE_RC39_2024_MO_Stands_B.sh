@@ -7,6 +7,7 @@ trap ex INT
 comp_name='Competitor'
 stand_name='RCMO39_2024_stand_B_'
 take_snapshot=true
+mk_tmpfs_imgdir='/root/tmpfs_IMGDIR'
 
 vm_opts=( '--serial0' socket '--agent' 1 '--ostype' l26 '--scsihw' virtio-scsi-single '--cpu' 'cputype=host' )
 Networking=(
@@ -139,10 +140,11 @@ pveum realm modify pve --comment 'Аутентификация участник�
 pveum realm modify pam --comment 'System'
 pvesh set /cluster/options --tag-style 'color-map=alt_server:ffcc14;alt_workstation:ac58e4,ordering=config,shape=none'
 
+mkdir -p $mk_tmpfs_imgdir && mount -t tmpfs tmpfs $mk_tmpfs_imgdir -o size=8G || echo 'Ошибка: Нет свободого ОЗУ: 8ГБ' && exit 1
 ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" --data-urlencode "path=/$2" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
-[ "$(file -b --mime-type ISP.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg ISP.qcow2) -o ISP.qcow2
-[ "$(file -b --mime-type Alt-Server.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Server.qcow2) -o Alt-Server.qcow2
-[ "$(file -b --mime-type Alt-Workstation.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Workstation.qcow2) -o Alt-Workstation.qcow2
+[ "$(file -b --mime-type $mk_tmpfs_imgdir/ISP.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg ISP.qcow2) -o $mk_tmpfs_imgdir/ISP.qcow2
+[ "$(file -b --mime-type $mk_tmpfs_imgdir/Alt-Server.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Server.qcow2) -o $mk_tmpfs_imgdir/Alt-Server.qcow2
+[ "$(file -b --mime-type $mk_tmpfs_imgdir/Alt-Workstation.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Workstation.qcow2) -o $mk_tmpfs_imgdir/Alt-Workstation.qcow2
 
 netifs() { printf '%s\n' "$@" | awk -v x="$(printf '%s\n' "${Networking[@]}")" -v id=$id 'BEGIN{n=0;split(x, a); for (i in a) dict[a[i]]="vmbr"i+id} $0 in dict || $0~/^vmbr[0-9]+$/{br=(dict[$1])? dict[$1] : $1;printf " --net" n " virtio,bridge=" br;n++ }'; }
 
@@ -171,70 +173,70 @@ IFACE
 
  	vmid=$id
 	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs vmbr0 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "${vm_opts[@]}"
-	qm importdisk $vmid ISP.qcow2 $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid $mk_tmpfs_imgdir/ISP.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
  	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: ISP is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-HQ' 'RTR-HQ<=>SW-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
  	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: RTR-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SW-HQ" --cores 1 --memory 1536 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-HQ<=>SW-HQ' 'SW-HQ<=>SRV-HQ' 'SW-HQ<=>CLI-HQ' 'SW-HQ<=>CICD-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
  	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
   	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: SW-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SRV-HQ" --cores 2 --memory 4096 --tags 'alt_server' --startup order=4,up=15,down=60 $(netifs 'SW-HQ<=>SRV-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --scsi1 $STORAGE:1,iothread=1 --scsi2 $STORAGE:1,iothread=1 --boot order=scsi0
  	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: SRV-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "CLI-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-HQ<=>CLI-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
  	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: CLI-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "CICD-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-HQ<=>CICD-HQ') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
  	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: CICD-HQ is done!!!"
  
 	((vmid++))
 	qm create $vmid --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-BR' 'RTR-BR<=>SW-BR') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
  	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: RTR-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SW-BR" --cores 1 --memory 1536 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-BR<=>SW-BR' 'SW-BR<=>SRV-BR' 'SW-BR<=>CLI-BR') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
  	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: SW-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SRV-BR" --cores 2 --memory 2048 --tags 'alt_server' --startup order=4,up=15,down=60 $(netifs 'SW-BR<=>SRV-BR') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --scsi1 $STORAGE:1,iothread=1 --scsi2 $STORAGE:1,iothread=1 --boot order=scsi0
  	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: SRV-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "CLI-BR" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-BR<=>CLI-BR') "${vm_opts[@]}"
-	qm importdisk $vmid Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n -3
+	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n -3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
  	$take_snapshot && qm snapshot 1001 Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: CLI-BR is done!!!"
@@ -245,5 +247,5 @@ IFACE
 
 }
 
-read -n 1 -p $'Удалить скачанные образа ВМ? [y|д|1]: ' switch
-[[ "$switch" =~ [yд1] ]] && rm -vf ISP.qcow2 Alt-Server.qcow2 Alt-Workstation.qcow2
+read -n 1 -p $'Удалить временный раздел со скачанными образами ВМ ('$mk_tmpfs_imgdir')? [y|д|1]: ' switch
+[[ "$switch" =~ [yд1] ]] && ( umount -q $mk_tmpfs_imgdir; rmdir $mk_tmpfs_imgdir )
