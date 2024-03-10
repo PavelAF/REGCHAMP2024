@@ -140,7 +140,7 @@ pveum realm modify pve --comment 'Аутентификация участник�
 pveum realm modify pam --comment 'System'
 pvesh set /cluster/options --tag-style 'color-map=alt_server:ffcc14;alt_workstation:ac58e4,ordering=config,shape=none'
 
-mkdir -p $mk_tmpfs_imgdir && mount -t tmpfs tmpfs $mk_tmpfs_imgdir -o size=8G || echo 'Ошибка: Нет свободого ОЗУ: 8ГБ' && exit 1
+mkdir -p $mk_tmpfs_imgdir && mount -t tmpfs tmpfs $mk_tmpfs_imgdir -o size=8G || ( echo 'Ошибка: Нет свободого ОЗУ: 8ГБ' && exit 1 )
 ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" --data-urlencode "path=/$2" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
 [ "$(file -b --mime-type $mk_tmpfs_imgdir/ISP.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg ISP.qcow2) -o $mk_tmpfs_imgdir/ISP.qcow2
 [ "$(file -b --mime-type $mk_tmpfs_imgdir/Alt-Server.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Server.qcow2) -o $mk_tmpfs_imgdir/Alt-Server.qcow2
