@@ -5,7 +5,7 @@ trap ex INT
 # exec:		sh='PVE_RC39_2024_MO_Stands_B.sh';curl -sOLH 'Cache-Control: no-cache' "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh"&&chmod +x $sh&&./$sh;rm -f $sh
 
 comp_name='Competitor'
-stand_name='RCMO39_2024_stand_B_'
+stand_name='RCMO39-2024_stand_B-'
 take_snapshot=true
 mk_tmpfs_imgdir='/root/tmpfs_IMGDIR'
 
