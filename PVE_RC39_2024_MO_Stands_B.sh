@@ -22,7 +22,7 @@ Networking=(
 	'SW-BR<=>CLI-BR'
 )
 
-until read -p $'Действие: 1 - Развертывание стенда, 2 - Управление развертыванием: ' switch; [[ "$switch" =~ ^[1-2]$ ]]; do true;done
+until read -p $'\nДействие: 1 - Развертывание стенда, 2 - Управление развертыванием: ' switch; [[ "$switch" =~ ^[1-2]$ ]]; do true;done
 if [[ "$switch" == 2 ]]; then
 	until read -p $'Стартовый номер участника: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
 	until read -p $'Конечный номер участника: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
