@@ -81,7 +81,7 @@ CONF
 Requires=pve-cluster.service
 After=pve-cluster.service
 EOF
-			systemctl enable --now nginx.service
+			systemctl enable nginx.service
 			
 			echo 'LISTEN_IP="127.0.0.1"' > /etc/default/pveproxy
 
@@ -100,8 +100,6 @@ EOF
 			openssl x509 -req -days 3650 -in pve-ssl.csr -CA /etc/pve/pve-root-ca.pem -CAkey /etc/pve/priv/pve-root-ca.key -CAserial /etc/pve/priv/pve-root-ca.srl -out /etc/pve/local/pve-ssl.pem -extensions EXT \
 			-extfile <(echo $'\n[EXT]\nnsComment="PVE server certificate for Prof RCMO39-2024"\nbasicConstraints=CA:FALSE\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid,issuer:always\nextendedKeyUsage=serverAuth\nkeyUsage=critical, digitalSignature, keyEncipherment\nnsCertType = server\nsubjectAltName = @alt_names\n[alt_names]'; echo "$altNames")
 			rm -f pve-ssl.csr
-
-			systemctl restart pveproxy.service spiceproxy.service nginx.service
    			
 			openssl req -subj /CN=RCMO39-SSL-Auth -new -nodes -newkey rsa:2048 -out pve-ssl-auth.csr -keyout /etc/pve/priv/pve-ssl-auth.key
    
@@ -116,6 +114,7 @@ EOF
 			echo $'\n\nСохраните строку выше как файл encode.txt, откройте cmd и введите команду:\n\ncertutil -f -decode encode.txt RCMO39-ssl-auth.p12'
 			echo $'\nЗатем разместите файл RCMO39-ssl-auth.p12 на машинах участников и установите сертификаты для текущего пользователя'
 
+			systemctl restart pveproxy.service spiceproxy.service nginx.service
    			exit
 		)
 	}
