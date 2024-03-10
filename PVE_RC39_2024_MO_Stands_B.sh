@@ -109,11 +109,12 @@ EOF
 			
 			openssl pkcs12 -name 'Сертификат участника соревнований Prof RCMO39-2024' -caname 'Центр сертификации соревнований Prof RCMO39-2024' -export -in /etc/pve/priv/pve-ssl-auth.pem -inkey /etc/pve/priv/pve-ssl-auth.key -certfile /etc/pve/pve-root-ca.pem -out RCMO39-ssl-auth.p12
 			
-			
+
 			clear; cat RCMO39-ssl-auth.p12 | base64
 			echo $'\n\nСохраните строку выше как файл encode.txt, откройте cmd и введите команду:\n\ncertutil -f -decode encode.txt RCMO39-ssl-auth.p12'
 			echo $'\nЗатем разместите файл RCMO39-ssl-auth.p12 на машинах участников и установите сертификаты для текущего пользователя'
 
+			read -n1 -s -p $'Нажмите любую клавишу, чтобы завершить выполнение скрипта\n'
 			systemctl restart pveproxy.service spiceproxy.service nginx.service
    			exit
 		)
