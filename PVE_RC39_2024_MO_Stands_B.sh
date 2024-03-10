@@ -140,7 +140,7 @@ pveum realm modify pve --comment 'Аутентификация участник�
 pveum realm modify pam --comment 'System'
 pvesh set /cluster/options --tag-style 'color-map=alt_server:ffcc14;alt_workstation:ac58e4,ordering=config,shape=none'
 
-awk '/MemFree/ {if($2<120582912) {print "Ошибка: Недостаточо свободной оперативной памяти!\nДля развертывания стенда необходимо как минимум 12 ГБ свободоной ОЗУ";exit 1} }' /proc/meminfo || exit
+awk '/MemFree/ {if($2<12582912) {print "Ошибка: Недостаточо свободной оперативной памяти!\nДля развертывания стенда необходимо как минимум 12 ГБ свободоной ОЗУ";exit 1} }' /proc/meminfo || exit
 mkdir -p $mk_tmpfs_imgdir && ((mountpoint -q $mk_tmpfs_imgdir || mount -t tmpfs tmpfs $mk_tmpfs_imgdir -o size=8G) || ( echo 'Ошибка при создании временного хранилища tmpfs' && exit 1 ))
 ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" --data-urlencode "path=/$2" 'https://cloud-api.yandex.net/v1/disk/public/resources/download' | grep -Po '"href":"\K[^"]+'); }
 [ "$(file -b --mime-type $mk_tmpfs_imgdir/ISP.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg ISP.qcow2) -o $mk_tmpfs_imgdir/ISP.qcow2
