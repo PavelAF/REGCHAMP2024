@@ -114,6 +114,8 @@ EOF
 			clear; cat RCMO39-ssl-auth.p12 | base64
 			echo $'\n\nСохраните строку выше как файл encode.txt, откройте cmd и введите команду:\n\ncertutil -f -decode encode.txt RCMO39-ssl-auth.p12'
 			echo $'\nЗатем разместите файл RCMO39-ssl-auth.p12 на машинах участников и установите сертификаты для текущего пользователя'
+
+   			exit
 		)
 	}
 	exit
