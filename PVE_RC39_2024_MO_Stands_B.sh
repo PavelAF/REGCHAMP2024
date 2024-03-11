@@ -165,7 +165,8 @@ for ((stand=$switch; stand<=$switch2; stand++))
 	for i in "${!Networking[@]}"
 	do
 		iface=vmbr$((id+i+1)); desc=${Networking[$i]}
-		pvesh create /nodes/`hostname`/network --iface $iface --type bridge --autostart 1 --comments $desc
+		pvesh create /nodes/`hostname`/network --iface $iface --type bridge --autostart 1 --comments $desc \
+  			|| read -n 1 -p "Интерфейс $iface ($desc) уже существует! Стенд уже был развернут?"$'\nНажмите Ctrl-C для остановки или любую клавишу для продолжения'
 		pveum acl modify /sdn/zones/localnetwork/$iface --users $comp_name$stand@pve --roles PVEAuditor
   		ifup $iface -i /etc/network/interfaces.new
 	done
