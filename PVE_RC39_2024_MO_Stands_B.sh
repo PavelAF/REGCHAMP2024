@@ -165,17 +165,9 @@ for ((stand=$switch; stand<=$switch2; stand++))
 	for i in "${!Networking[@]}"
 	do
 		iface=vmbr$((id+i+1)); desc=${Networking[$i]}
-		cat <<IFACE >> /etc/network/interfaces
-
-auto ${iface}
-iface ${iface} inet manual
-	bridge-ports none
-	bridge-stp off
-	bridge-fd 0
-#${desc}
-IFACE
-		ifup $iface
+		pvesh create /nodes/`hostname`/network --iface $iface --type bridge --autostart 1 --comments $desc
 		pveum acl modify /sdn/zones/localnetwork/$iface --users $comp_name$stand@pve --roles PVEAuditor
+  		ifup $iface -i /etc/network/interfaces.new
 	done
 
  	vmid=$id
