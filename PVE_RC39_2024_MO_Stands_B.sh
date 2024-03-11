@@ -59,8 +59,8 @@ if [[ "$switch" == 2 ]]; then
 server {
 ${listen}
     server_name _;
-    ssl_certificate /etc/pve/local/pve-ssl2.pem;
-    ssl_certificate_key /etc/pve/local/pve-ssl2.key;
+    ssl_certificate /etc/pve/local/pve-nginx-ssl.pem;
+    ssl_certificate_key /etc/pve/local/pve-nginx-ssl.key;
     ssl_client_certificate /etc/pve/pve-root-ca.pem;
     ssl_verify_client on;
     keepalive_timeout 70;
@@ -98,10 +98,10 @@ EOF
 			
 			altNames=`echo "$ipNames" | awk 'BEGIN{n=1}NF{print "IP."n"="$0;n++}'; echo $'localhost\n'$(hostname --all-fqdns)$'\n'${dns_name,,} | awk 'BEGIN{n=1}NF{print "DNS."n"="$0;n++}'`
 			
-			mv /etc/pve/local/pve-ssl.key pve-ssl.key.backup; mv /etc/pve/local/pve-ssl.pem pve-ssl.pem.backup
-			openssl req -subj /CN=`hostname --fqdn` -new -nodes -newkey rsa:2048 -out pve-ssl.csr -keyout /etc/pve/local/pve-ssl2.key
+			rm -f /etc/pve/local/pve-nginx-ssl.*
+			openssl req -subj /CN=`hostname --fqdn` -new -nodes -newkey rsa:2048 -out pve-ssl.csr -keyout /etc/pve/local/pve-nginx-ssl.key
 			
-			openssl x509 -req -days 3650 -in pve-ssl.csr -CA /etc/pve/pve-root-ca.pem -CAkey /etc/pve/priv/pve-root-ca.key -CAserial /etc/pve/priv/pve-root-ca.srl -out /etc/pve/local/pve-ssl2.pem -extensions EXT \
+			openssl x509 -req -days 3650 -in pve-ssl.csr -CA /etc/pve/pve-root-ca.pem -CAkey /etc/pve/priv/pve-root-ca.key -CAserial /etc/pve/priv/pve-root-ca.srl -out /etc/pve/local/pve-nginx-ssl.pem -extensions EXT \
 			-extfile <(echo $'\n[EXT]\nnsComment="PVE server certificate for Prof RCMO39-2024"\nbasicConstraints=CA:FALSE\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid,issuer:always\nextendedKeyUsage=serverAuth\nkeyUsage=critical, digitalSignature, keyEncipherment\nnsCertType = server\nsubjectAltName = @alt_names\n[alt_names]'; echo "$altNames")
 			rm -f pve-ssl.csr
    			
