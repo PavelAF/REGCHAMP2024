@@ -37,7 +37,7 @@ if [[ "$switch" == 2 ]]; then
 		[ $switch3 == 2 ] && pveum user modify $comp_name$stand@pve --enable 0
 		[ $switch3 == 3 ] && \
 		(
-			psswd=`tr -dc 'A-Za-z1-9' </dev/urandom | head -c 6`
+			psswd=`openssl rand -base64 10 | base32 | cut -c1-4`
 			pvesh set /access/password --userid $comp_name$stand@pve --password $psswd
 			echo $'\n'"$comp_name$stand : $psswd"
 		)
