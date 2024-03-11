@@ -5,7 +5,7 @@ trap ex INT
 # exec:		sh='PVE_RC39_2024_MO_Stands_B.sh';curl -sOLH 'Cache-Control: no-cache' "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh"&&chmod +x $sh&&./$sh;rm -f $sh
 
 # бридж для подключения ВМ (с доступом в интернет через НАТ):
-INET_BRIDGE='vmbr10'
+INET_BRIDGE='vmbr0'
 
 comp_name='Competitor'
 stand_name='RCMO39-2024_stand_B-'
@@ -133,6 +133,8 @@ STORAGE=`echo "$sl" | awk -F' ' -v nr=$switch 'NR==nr{print $1}'`
 
 until read -p $'Ввведите начальный идентификатор ВМ и bridge: ' switch; [[ "$switch" =~ ^[1-9][0-9]*$ ]] && [[ $switch -lt 3900 && $switch -ge 100 ]]; do true;done
 start_num=$switch
+until read -p $'Ввведите имя бриджа для виртуальной машины ISP\nvmbr-интерфейс с выходом в интернет (default='$INET_BRIDGE'): ' switch; [[ "$switch" =~ ^[a-z0-9\n]*$|^$ ]]; do true;done
+INET_BRIDGE=${switch:=$INET_BRIDGE}
 
 until read -p $'Ввведите стартовый номер стенда: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
 until read -p $'Ввведите конечный номер стенда: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
