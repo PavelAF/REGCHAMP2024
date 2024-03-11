@@ -54,6 +54,7 @@ if [[ "$switch" == 2 ]]; then
 			ip6_i=`ip route get 1::1 |& grep -Po '\ src\ \K[0-9a-f\:]+'`
 			listen=`echo $ip_i$'\n'$ip6_i | awk 'BEGIN{t="    listen %s:%s ssl;\n"}NF{if($0~/:/)$0="["$0"]";printf t t,$0,443,$0,8006;}'`
 
+			rm -f /etc/nginx/sites-enabled/default
 			cat <<CONF > /etc/nginx/conf.d/pve-proxy.conf
 server {
 ${listen}
