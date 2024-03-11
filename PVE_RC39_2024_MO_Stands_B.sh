@@ -4,6 +4,9 @@ trap ex INT
 
 # exec:		sh='PVE_RC39_2024_MO_Stands_B.sh';curl -sOLH 'Cache-Control: no-cache' "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh"&&chmod +x $sh&&./$sh;rm -f $sh
 
+# бридж для подключения ВМ (с доступом в интернет через НАТ):
+INET_BRIDGE='vmbr10'
+
 comp_name='Competitor'
 stand_name='RCMO39-2024_stand_B-'
 take_snapshot=true
@@ -55,8 +58,8 @@ if [[ "$switch" == 2 ]]; then
 server {
 ${listen}
     server_name _;
-    ssl_certificate /etc/pve/local/pve-ssl.pem;
-    ssl_certificate_key /etc/pve/local/pve-ssl.key;
+    ssl_certificate /etc/pve/local/pve-ssl2.pem;
+    ssl_certificate_key /etc/pve/local/pve-ssl2.key;
     ssl_client_certificate /etc/pve/pve-root-ca.pem;
     ssl_verify_client on;
     keepalive_timeout 70;
@@ -95,9 +98,9 @@ EOF
 			altNames=`echo "$ipNames" | awk 'BEGIN{n=1}NF{print "IP."n"="$0;n++}'; echo $'localhost\n'$(hostname --all-fqdns)$'\n'${dns_name,,} | awk 'BEGIN{n=1}NF{print "DNS."n"="$0;n++}'`
 			
 			mv /etc/pve/local/pve-ssl.key pve-ssl.key.backup; mv /etc/pve/local/pve-ssl.pem pve-ssl.pem.backup
-			openssl req -subj /CN=`hostname --fqdn` -new -nodes -newkey rsa:2048 -out pve-ssl.csr -keyout /etc/pve/local/pve-ssl.key
+			openssl req -subj /CN=`hostname --fqdn` -new -nodes -newkey rsa:2048 -out pve-ssl.csr -keyout /etc/pve/local/pve-ssl2.key
 			
-			openssl x509 -req -days 3650 -in pve-ssl.csr -CA /etc/pve/pve-root-ca.pem -CAkey /etc/pve/priv/pve-root-ca.key -CAserial /etc/pve/priv/pve-root-ca.srl -out /etc/pve/local/pve-ssl.pem -extensions EXT \
+			openssl x509 -req -days 3650 -in pve-ssl.csr -CA /etc/pve/pve-root-ca.pem -CAkey /etc/pve/priv/pve-root-ca.key -CAserial /etc/pve/priv/pve-root-ca.srl -out /etc/pve/local/pve-ssl2.pem -extensions EXT \
 			-extfile <(echo $'\n[EXT]\nnsComment="PVE server certificate for Prof RCMO39-2024"\nbasicConstraints=CA:FALSE\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid,issuer:always\nextendedKeyUsage=serverAuth\nkeyUsage=critical, digitalSignature, keyEncipherment\nnsCertType = server\nsubjectAltName = @alt_names\n[alt_names]'; echo "$altNames")
 			rm -f pve-ssl.csr
    			
@@ -173,7 +176,7 @@ IFACE
 	done
 
  	vmid=$id
-	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs vmbr0 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "${vm_opts[@]}"
+	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs $INET_BRIDGE 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/ISP.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
  	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
