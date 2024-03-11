@@ -64,7 +64,7 @@ ${listen}
     proxy_redirect off;
     location / {
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade"; 
         proxy_pass https://localhost:8006;
         proxy_buffering off;
