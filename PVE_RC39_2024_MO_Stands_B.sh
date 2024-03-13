@@ -143,6 +143,9 @@ until read -p $'Ввведите конечный номер стенда: ' swi
 pveum role add Competitor 2> /dev/null
 pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
 pveum realm modify pve --comment 'Аутентификация участника соревнований' --default 1
+pveum role add Competitor_ISP 2> /dev/null
+pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback'
+
 pveum realm modify pam --comment 'System'
 pvesh set /cluster/options --tag-style 'color-map=alt_server:ffcc14;alt_workstation:ac58e4,ordering=config,shape=none'
 
@@ -159,7 +162,7 @@ for ((stand=$switch; stand<=$switch2; stand++))
 {
 	pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
 	pveum pool add $stand_name$stand
-	pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles Competitor
+	pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles PVEAuditor --propagate 0
 
 	id=$((start_num+stand*100))
 	for i in "${!Networking[@]}"
@@ -175,74 +178,71 @@ for ((stand=$switch; stand<=$switch2; stand++))
 	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs $INET_BRIDGE 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/ISP.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
- 	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: ISP is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "RTR-HQ" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-HQ' 'RTR-HQ<=>SW-HQ') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
- 	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: RTR-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SW-HQ" --cores 1 --memory 1536 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-HQ<=>SW-HQ' 'SW-HQ<=>SRV-HQ' 'SW-HQ<=>CLI-HQ' 'SW-HQ<=>CICD-HQ') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n3
  	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
-  	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: SW-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SRV-HQ" --cores 2 --memory 4096 --tags 'alt_server' --startup order=4,up=15,down=60 $(netifs 'SW-HQ<=>SRV-HQ') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --scsi1 $STORAGE:1,iothread=1 --scsi2 $STORAGE:1,iothread=1 --boot order=scsi0
- 	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: SRV-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "CLI-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-HQ<=>CLI-HQ') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
- 	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: CLI-HQ is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "CICD-HQ" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-HQ<=>CICD-HQ') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
- 	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: CICD-HQ is done!!!"
  
 	((vmid++))
 	qm create $vmid --name "RTR-BR" --cores 2 --memory 1536 --tags 'alt_server' --startup order=2,up=20,down=30 $(netifs 'ISP<=>RTR-BR' 'RTR-BR<=>SW-BR') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
- 	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
+ 	
 	echo "$stand_name$stand: RTR-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SW-BR" --cores 1 --memory 1536 --tags 'alt_server' --startup order=3,up=15,down=30 $(netifs 'RTR-BR<=>SW-BR' 'SW-BR<=>SRV-BR' 'SW-BR<=>CLI-BR') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
- 	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: SW-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "SRV-BR" --cores 2 --memory 2048 --tags 'alt_server' --startup order=4,up=15,down=60 $(netifs 'SW-BR<=>SRV-BR') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Server.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --scsi1 $STORAGE:1,iothread=1 --scsi2 $STORAGE:1,iothread=1 --boot order=scsi0
- 	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: SRV-BR is done!!!"
 
 	((vmid++))
 	qm create $vmid --name "CLI-BR" --cores 2 --memory 2048 --tags 'alt_workstation' --startup order=5,up=20,down=30 $(netifs 'SW-BR<=>CLI-BR') "${vm_opts[@]}"
 	qm importdisk $vmid $mk_tmpfs_imgdir/Alt-Workstation.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
- 	$take_snapshot && qm snapshot $vmid Start --description 'Исходное состояние ВМ' | tail -n2
 	echo "$stand_name$stand: CLI-BR is done!!!"
 
 	pvesh set /pools/$stand_name$stand -vms "`seq -s, $id 1 $vmid`"
-
+	for ((i=$id; i<=$vmid; i++))
+ 	{
+  		$take_snapshot && qm snapshot $i Start --description 'Исходное состояние ВМ' | tail -n2
+  		qm pveum acl modify /vms/i --roles Competitor --users $comp_name$stand@pve;
+    	}
+ 	qm pveum acl modify /vms/$id --roles Competitor_ISP --users $comp_name$stand@pve;
+  
 	echo "ALL DONE $stand_name$stand!!!"
 
 }
