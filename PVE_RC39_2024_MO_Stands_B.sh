@@ -44,12 +44,12 @@ if [[ "$switch" == 2 ]]; then
 		[ $switch3 == 4 ] && pveum user delete $comp_name$stand@pve
   		[ $switch3 == 5 ] && \
 		{
-			start_num || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
+			[ ! -z ${start_num+x} ] || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
 			for ((i=$start_num; i<=$start_num+9; i++)) { qm rollback $vmid Start; }
 		}
   		[ $switch3 == 6 ] && \
 		{
-			start_num || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
+			[ ! -z ${start_num+x} ] || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
 			for ((i=$start_num; i<=$start_num+9; i++)) { qm destroy $vmid --destroy-unreferenced-disks 1 --purge 1 --skiplock 1; }
    			id=$((start_num+stand*100)); pvesh get /nodes/`hostname`/network --type bridge | grep '│' | awk -F'│' -v id=$id -v host="`hostname`" -v x="$(printf '%s\n' "${Networking[@]}")" 'BEGIN{split(x, a,"\n"); for(i in a) dict[a[i]]=i}NR==1{s[1]="comments";s[2]="iface"; for(i=1;i<=NF;i++){ if ($i~s[1]) n1=i;if ($i~s[2]) n2=i } }NR>1{n=$n1; gsub(/(^[ \t\r\n]+)|([ \t\r\n]+$)/, "", n);i=$n2;gsub(/(^[ \t\r\n]+)|([ \t\r\n]+$)/, "", i)}n in dict && match(i, /^vmbr[0-9]+$/) && match(i, /[0-9]+/) { v=substr( i, RSTART, RLENGTH ); if (v>=id && v<id+100) system("pvesh delete /nodes/"host"/network/"i) }'
 			pvesh set /nodes/`hostname`/network
