@@ -29,7 +29,7 @@ until read -p $'\nДействие: 1 - Развертывание стенда,
 if [[ "$switch" == 2 ]]; then
 	until read -p $'Стартовый номер участника: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
 	until read -p $'Конечный номер участника: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
-	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей, \n\t5 - восстановить ВМ по снапшоту Start, 6 - Добавить SSL-аутентификацию\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-6]$ ]]; do true;done
+	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей, \n\t5 - восстановить ВМ по снапшоту Start, 6 - Удалить стенды и бриджи, 7 - Добавить SSL-аутентификацию\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-6]$ ]]; do true;done
 
 	for ((stand=$switch; stand<=$switch2; stand++))
 	{
@@ -43,11 +43,18 @@ if [[ "$switch" == 2 ]]; then
 		)
 		[ $switch3 == 4 ] && pveum user delete $comp_name$stand@pve
   		[ $switch3 == 5 ] && \
-		(
-			until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
+		{
+			start_num || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
 			for ((i=$start_num; i<=$start_num+9; i++)) { qm rollback $vmid Start; }
-		)
-    		[ $switch3 == 6 ] && \
+		}
+  		[ $switch3 == 6 ] && \
+		{
+			start_num || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
+			for ((i=$start_num; i<=$start_num+9; i++)) { qm destroy $vmid --destroy-unreferenced-disks 1 --purge 1 --skiplock 1; }
+   			id=$((start_num+stand*100)); pvesh get /nodes/`hostname`/network --type bridge | grep '│' | awk -F'│' -v id=$id -v host="`hostname`" -v x="$(printf '%s\n' "${Networking[@]}")" 'BEGIN{split(x, a,"\n"); for(i in a) dict[a[i]]=i}NR==1{s[1]="comments";s[2]="iface"; for(i=1;i<=NF;i++){ if ($i~s[1]) n1=i;if ($i~s[2]) n2=i } }NR>1{n=$n1; gsub(/(^[ \t\r\n]+)|([ \t\r\n]+$)/, "", n);i=$n2;gsub(/(^[ \t\r\n]+)|([ \t\r\n]+$)/, "", i)}n in dict && match(i, /^vmbr[0-9]+$/) && match(i, /[0-9]+/) { v=substr( i, RSTART, RLENGTH ); if (v>=id && v<id+100) system("pvesh delete /nodes/"host"/network/"i) }'
+			pvesh set /nodes/`hostname`/network
+		}
+    		[ $switch3 == 7 ] && \
 		(
 			apt install nginx-light -y
 			ip_i=`ip route get 1 |& grep -Po '\ src\ \K[0-9\.]+'`
@@ -141,10 +148,10 @@ until read -p $'Ввведите стартовый номер стенда: ' s
 until read -p $'Ввведите конечный номер стенда: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
 
 pveum role add Competitor 2> /dev/null
-pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
+pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network' --comment 'Права на ВМ для участника соревнований'
 pveum realm modify pve --comment 'Аутентификация участника соревнований' --default 1
 pveum role add Competitor_ISP 2> /dev/null
-pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback'
+pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback' --comment 'Права на ВМ ISP для участника соревнований'
 
 pveum realm modify pam --comment 'System'
 pvesh set /cluster/options --tag-style 'color-map=alt_server:ffcc14;alt_workstation:ac58e4,ordering=config,shape=none'
