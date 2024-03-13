@@ -165,11 +165,11 @@ until read -p $'Ввведите конечный номер стенда: ' swi
 
 pveum role add Competitor 2> /dev/null
 pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network' --comment 'Права на ВМ для участника соревнований'
-pveum realm modify pve --comment 'Аутентификация участника соревнований' --default 1
 pveum role add Competitor_ISP 2> /dev/null
 pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback' --comment 'Права на ВМ ISP для участника соревнований'
 
 pveum realm modify pam --comment 'System'
+pveum realm modify pve --comment 'Аутентификация участника соревнований' --default 1
 pvesh set /cluster/options --tag-style 'color-map=alt_server:ffcc14;alt_workstation:ac58e4,ordering=config,shape=none'
 
 awk '/MemFree/ {if($2<12582912) {print "Ошибка: Недостаточо свободной оперативной памяти!\nДля развертывания стенда необходимо как минимум 12 ГБ свободоной ОЗУ";exit 1} }' /proc/meminfo || exit
