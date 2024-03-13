@@ -183,7 +183,7 @@ for ((stand=$switch; stand<=$switch2; stand++))
  	pvesh set "/nodes/`hostname`/network"
 
  	vmid=$id
-	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs $INET_BRIDGE 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "${vm_opts[@]}"
+	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs $INET_BRIDGE 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "${vm_opts[@]}" || read -n 1 -p "Виртуальная машина $vmid (ISP) уже существует! Стенд уже был развернут?"$'\nНажмите Ctrl-C для остановки или любую клавишу для продолжения'
 	qm importdisk $vmid $mk_tmpfs_imgdir/ISP.qcow2 $STORAGE --format qcow2 | tail -n3
 	qm set $vmid --scsi0 $STORAGE:vm-$vmid-disk-0,iothread=1 --boot order=scsi0
 	echo "$stand_name$stand: ISP is done!!!"
