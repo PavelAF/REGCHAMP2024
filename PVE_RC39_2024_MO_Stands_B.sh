@@ -179,7 +179,7 @@ ya_url() { echo $(curl --silent -G --data-urlencode "public_key=$1" --data-urlen
 [ "$(file -b --mime-type $mk_tmpfs_imgdir/Alt-Server.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Server.qcow2) -o $mk_tmpfs_imgdir/Alt-Server.qcow2
 [ "$(file -b --mime-type $mk_tmpfs_imgdir/Alt-Workstation.qcow2)" == application/x-qemu-disk ] || curl -L $(ya_url https://disk.yandex.ru/d/xPK-Kt3E7Slmbg Alt-Workstation.qcow2) -o $mk_tmpfs_imgdir/Alt-Workstation.qcow2
 
-netifs() { printf '%s\n' "$@" | awk -v x="$(printf '%s\n' "${Networking[@]}")" -v id=$id 'BEGIN{n=0;split(x, a); for (i in a) dict[a[i]]="vmbr"i+id} $0 in dict || $0~/^vmbr[0-9]+$/{br=(dict[$1])? dict[$1] : $1;printf " --net" n " virtio,bridge=" br;n++ }'; }
+netifs() { printf '%s\n' "$@" | awk -v x="$(printf '%s\n' "${Networking[@]}")" -v id=$id 'BEGIN{n=0;split(x, a); for (i in a) dict[a[i]]="vmbr"i+id} $0 in dict || $0~/^vmbr[0-9]+/{br=(dict[$1])? dict[$1] : $1;printf " --net" n " virtio,bridge=" br;n++ }'; }
 
 for ((stand=$switch; stand<=$switch2; stand++))
 {
