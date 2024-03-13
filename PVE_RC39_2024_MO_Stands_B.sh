@@ -29,7 +29,7 @@ until read -p $'\nДействие: 1 - Развертывание стенда,
 if [[ "$switch" == 2 ]]; then
 	until read -p $'Стартовый номер участника: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
 	until read -p $'Конечный номер участника: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
-	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей, \n\t5 - восстановить ВМ по снапшоту Start, 6 - Удалить созданные стенды/бриджи/пользователей, 7 - Добавить SSL-аутентификацию\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-6]$ ]]; do true;done
+	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей, \n\t5 - (Пере)установить права участиков на ВМ, 6 - восстановить ВМ по снапшоту Start, 7 - Удалить созданные стенды/бриджи/пользователей, 8 - Добавить SSL-аутентификацию\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-8]$ ]]; do true;done
 
 	for ((stand=$switch; stand<=$switch2; stand++))
 	{
@@ -44,10 +44,23 @@ if [[ "$switch" == 2 ]]; then
 		[ $switch3 == 4 ] && pveum user delete $comp_name$stand@pve
   		[ $switch3 == 5 ] && \
 		{
+  			[ ! -z ${start_num+x} ] || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
+  			pveum role add Competitor 2> /dev/null
+			pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network' --comment 'Права на ВМ для участника соревнований'
+			pveum role add Competitor_ISP 2> /dev/null
+			pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback' --comment 'Права на ВМ ISP для участника соревнований'
+			for ((i=$start_num+1; i<=$start_num+9; i++)) { qm pveum acl modify /vms/$((start_num+stand*100+i)) --roles Competitor --users $comp_name$stand@pve; }
+ 			qm pveum acl modify /vms/$((start_num+stand*100)) --roles Competitor_ISP --users $comp_name$stand@pve;
+    			pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
+			pveum pool add $stand_name$stand
+			pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles PVEAuditor --propagate 0
+		}
+  		[ $switch3 == 6 ] && \
+		{
 			[ ! -z ${start_num+x} ] || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
 			for ((i=$start_num; i<=$start_num+9; i++)) { qm rollback $((start_num+stand*100+i)) Start; }
 		}
-  		[ $switch3 == 6 ] && \
+  		[ $switch3 == 7 ] && \
 		{
 			[ ! -z ${start_num+x} ] || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
 			id=$((start_num+stand*100))
@@ -57,7 +70,7 @@ if [[ "$switch" == 2 ]]; then
    			pveum pool delete $stand_name$stand
 			pveum user delete $comp_name$stand@pve 
 		}
-    		[ $switch3 == 7 ] && \
+    		[ $switch3 == 8 ] && \
 		(
 			apt install nginx-light -y
 			ip_i=`ip route get 1 |& grep -Po '\ src\ \K[0-9\.]+'`
