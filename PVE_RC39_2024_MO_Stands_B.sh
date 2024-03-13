@@ -29,7 +29,7 @@ until read -p $'\nДействие: 1 - Развертывание стенда,
 if [[ "$switch" == 2 ]]; then
 	until read -p $'Стартовый номер участника: ' switch; [[ "$switch" =~ ^[0-9]*$ ]] && [[ $switch -le 100 ]]; do true;done
 	until read -p $'Конечный номер участника: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
-	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей, \n\t5 - восстановить ВМ по снапшоту Start, 6 - Удалить созданные стенды и бриджи, 7 - Добавить SSL-аутентификацию\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-6]$ ]]; do true;done
+	until read -p $'Действие: 1 - активировать пользователей, 2 - отключить аккаунты, 3 - установить пароли, 4 - удалить пользователей, \n\t5 - восстановить ВМ по снапшоту Start, 6 - Удалить созданные стенды/бриджи/пользователей, 7 - Добавить SSL-аутентификацию\nВыберите действие: ' switch3; [[ "$switch3" =~ ^[1-6]$ ]]; do true;done
 
 	for ((stand=$switch; stand<=$switch2; stand++))
 	{
@@ -54,6 +54,8 @@ if [[ "$switch" == 2 ]]; then
    			for ((i=$start_num; i<=$start_num+9; i++)) { qm destroy $((id+i)) --destroy-unreferenced-disks 1 --purge 1 --skiplock 1; }
    			pvesh get "/nodes/`hostname`/network" --type bridge | grep '│' | awk -F'│' -v id=$id -v host="`hostname`" -v x="$(printf '%s\n' "${Networking[@]}")" 'BEGIN{split(x, a,"\n"); for(i in a) dict[a[i]]=i}NR==1{s[1]="comments";s[2]="iface"; for(i=1;i<=NF;i++){ if ($i~s[1]) n1=i;if ($i~s[2]) n2=i } }NR>1{n=$n1; gsub(/(^[ \t\r\n]+)|([ \t\r\n]+$)/, "", n);i=$n2;gsub(/(^[ \t\r\n]+)|([ \t\r\n]+$)/, "", i)}n in dict && match(i, /^vmbr[0-9]+$/) && match(i, /[0-9]+/) { v=substr( i, RSTART, RLENGTH ); if (v>=id && v<id+100) system("pvesh delete /nodes/"host"/network/"i) }'
 			pvesh set "/nodes/`hostname`/network"
+   			pveum pool delete $stand_name$stand
+			pveum user delete $comp_name$stand@pve 
 		}
     		[ $switch3 == 7 ] && \
 		(
