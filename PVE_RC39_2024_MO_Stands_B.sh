@@ -52,8 +52,8 @@ if [[ "$switch" == 2 ]]; then
 			[ ! -z ${start_num+x} ] || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
 			id=$((start_num+stand*100))
    			for ((i=$start_num; i<=$start_num+9; i++)) { qm destroy $((id+i)) --destroy-unreferenced-disks 1 --purge 1 --skiplock 1; }
-   			pvesh get /nodes/`hostname`/network --type bridge | grep '│' | awk -F'│' -v id=$id -v host="`hostname`" -v x="$(printf '%s\n' "${Networking[@]}")" 'BEGIN{split(x, a,"\n"); for(i in a) dict[a[i]]=i}NR==1{s[1]="comments";s[2]="iface"; for(i=1;i<=NF;i++){ if ($i~s[1]) n1=i;if ($i~s[2]) n2=i } }NR>1{n=$n1; gsub(/(^[ \t\r\n]+)|([ \t\r\n]+$)/, "", n);i=$n2;gsub(/(^[ \t\r\n]+)|([ \t\r\n]+$)/, "", i)}n in dict && match(i, /^vmbr[0-9]+$/) && match(i, /[0-9]+/) { v=substr( i, RSTART, RLENGTH ); if (v>=id && v<id+100) system("pvesh delete /nodes/"host"/network/"i) }'
-			pvesh set /nodes/`hostname`/network
+   			pvesh get "/nodes/`hostname`/network" --type bridge | grep '│' | awk -F'│' -v id=$id -v host="`hostname`" -v x="$(printf '%s\n' "${Networking[@]}")" 'BEGIN{split(x, a,"\n"); for(i in a) dict[a[i]]=i}NR==1{s[1]="comments";s[2]="iface"; for(i=1;i<=NF;i++){ if ($i~s[1]) n1=i;if ($i~s[2]) n2=i } }NR>1{n=$n1; gsub(/(^[ \t\r\n]+)|([ \t\r\n]+$)/, "", n);i=$n2;gsub(/(^[ \t\r\n]+)|([ \t\r\n]+$)/, "", i)}n in dict && match(i, /^vmbr[0-9]+$/) && match(i, /[0-9]+/) { v=substr( i, RSTART, RLENGTH ); if (v>=id && v<id+100) system("pvesh delete /nodes/"host"/network/"i) }'
+			pvesh set "/nodes/`hostname`/network"
 		}
     		[ $switch3 == 7 ] && \
 		(
@@ -107,7 +107,7 @@ EOF
 			altNames=`echo "$ipNames" | awk 'BEGIN{n=1}NF{print "IP."n"="$0;n++}'; echo $'localhost\n'$(hostname --all-fqdns)$'\n'${dns_name,,} | awk 'BEGIN{n=1}NF{print "DNS."n"="$0;n++}'`
 			
 			rm -f /etc/pve/local/pve-nginx-ssl.*
-			openssl req -subj /CN=`hostname --fqdn` -new -nodes -newkey rsa:2048 -out pve-ssl.csr -keyout /etc/pve/local/pve-nginx-ssl.key
+			openssl req -subj "/CN=`hostname --fqdn`" -new -nodes -newkey rsa:2048 -out pve-ssl.csr -keyout /etc/pve/local/pve-nginx-ssl.key
 			
 			openssl x509 -req -days 3650 -in pve-ssl.csr -CA /etc/pve/pve-root-ca.pem -CAkey /etc/pve/priv/pve-root-ca.key -CAserial /etc/pve/priv/pve-root-ca.srl -out /etc/pve/local/pve-nginx-ssl.pem -extensions EXT \
 			-extfile <(echo $'\n[EXT]\nnsComment="PVE server certificate for Prof RCMO39-2024"\nbasicConstraints=CA:FALSE\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid,issuer:always\nextendedKeyUsage=serverAuth\nkeyUsage=critical, digitalSignature, keyEncipherment\nnsCertType = server\nsubjectAltName = @alt_names\n[alt_names]'; echo "$altNames")
@@ -176,11 +176,11 @@ for ((stand=$switch; stand<=$switch2; stand++))
 	for i in "${!Networking[@]}"
 	do
 		iface=vmbr$((id+i+1)); desc=${Networking[$i]}
-		pvesh create /nodes/`hostname`/network --iface $iface --type bridge --autostart 1 --comments $desc \
+		pvesh create "/nodes/`hostname`/network" --iface $iface --type bridge --autostart 1 --comments $desc \
   			|| read -n 1 -p "Интерфейс $iface ($desc) уже существует! Стенд уже был развернут?"$'\nНажмите Ctrl-C для остановки или любую клавишу для продолжения'
 		pveum acl modify /sdn/zones/localnetwork/$iface --users $comp_name$stand@pve --roles PVEAuditor
-  		ifup $iface -i /etc/network/interfaces.new
 	done
+ 	pvesh set "/nodes/`hostname`/network"
 
  	vmid=$id
 	qm create $vmid --name "ISP" --cores 1 --memory 1024 --startup order=1,up=10,down=30 $(netifs $INET_BRIDGE 'ISP<=>RTR-HQ' 'ISP<=>RTR-BR') "${vm_opts[@]}"
