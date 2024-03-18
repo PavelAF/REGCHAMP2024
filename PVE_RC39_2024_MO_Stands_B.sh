@@ -2,7 +2,7 @@
 ex() { echo; exit; }
 trap ex INT
 
-# exec:		sh='PVE_RC39_2024_MO_Stands_B.sh';curl -sOLH 'Cache-Control: no-cache' "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh"&&chmod +x $sh&&nohub $sh;rm -f $sh
+# exec:		sh='PVE_RC39_2024_MO_Stands_B.sh';curl -sOLH 'Cache-Control: no-cache' "https://raw.githubusercontent.com/PavelAF/REGCHAMP2024/111/$sh"&&chmod +x $sh&&./$sh;rm -f $sh
 
 # бридж для подключения ВМ (address DHCP, с доступом в интернет через NAT):
 INET_BRIDGE='vmbr0'
