@@ -164,9 +164,9 @@ until read -p $'Ввведите стартовый номер стенда: ' s
 until read -p $'Ввведите конечный номер стенда: ' switch2; [[ "$switch2" =~ ^[0-9]*$ ]] && [[ $switch2 -le 100 && $switch2 -ge $switch ]]; do true;done
 
 pveum role add Competitor 2> /dev/null
-pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network' --comment 'Права на ВМ для участника соревнований'
+pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
 pveum role add Competitor_ISP 2> /dev/null
-pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback' --comment 'Права на ВМ ISP для участника соревнований'
+pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback'
 
 pveum realm modify pam --comment 'System'
 pveum realm modify pve --comment 'Аутентификация участника соревнований' --default 1
@@ -263,7 +263,7 @@ for ((stand=$switch; stand<=$switch2; stand++))
 	for ((i=$id; i<=$vmid; i++))
  	{
   		$take_snapshot && qm snapshot $i Start --description 'Исходное состояние ВМ' | tail -n2
-  		qm pveum acl modify /vms/i --roles Competitor --users $comp_name$stand@pve;
+  		pveum acl modify /vms/i --roles Competitor --users $comp_name$stand@pve;
     	}
  	qm pveum acl modify /vms/$id --roles Competitor_ISP --users $comp_name$stand@pve;
   
