@@ -56,7 +56,7 @@ if [[ "$switch" == 2 ]]; then
 			pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback'
 
 			pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
-			pveum pool add $stand_name$stand
+			pveum pool add $stand_name$stand --comment 'Стенд участника регионального этапа Чемпионата «Профессионалы» компетенции Сетевое и системное администрирование, модуль Б'
 			pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles PVEAuditor --propagate 0
 		
 			id=$((start_num+stand*100))
@@ -64,9 +64,6 @@ if [[ "$switch" == 2 ]]; then
    			
 			for ((i=1; i<=9; i++)) { pveum acl modify /vms/$((id+i)) --roles Competitor --users $comp_name$stand@pve; }
  			pveum acl modify /vms/$id --roles Competitor_ISP --users $comp_name$stand@pve;
-    			pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
-			pveum pool add $stand_name$stand --comment 'Стенд участника регионального этапа Чемпионата «Профессионалы» компетенции Сетевое и системное администрирование, модуль Б'
-			pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles PVEAuditor --propagate 0
 		}
   		[ $switch3 == 6 ] && \
 		{
