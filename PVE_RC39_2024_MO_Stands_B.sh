@@ -197,8 +197,10 @@ netifs() { printf '%s\n' "$@" | awk -v x="$(printf '%s\n' "${Networking[@]}")" -
 
 for ((stand=$switch; stand<=$switch2; stand++))
 {
-	pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
-	pveum pool add $stand_name$stand
+	pveum user add $comp_name$stand@pve 2> /dev/null
+	pveum user modify $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
+	pveum pool add $stand_name$stand 2> /dev/null
+	pveum pool modify $stand_name$stand --comment $'Стенд участника регионального этапа Чемпионата «Профессионалы» компетенции Сетевое и системное администрирование\nМодуль Б, стенд #'$stand
 	pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles PVEAuditor --propagate 0
 
 	id=$((start_num+stand*100))
