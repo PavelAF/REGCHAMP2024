@@ -46,11 +46,11 @@ if [[ "$switch" == 2 ]]; then
 		{
   			[ ! -z ${start_num+x} ] || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
   			pveum role add Competitor 2> /dev/null
-			pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network' --comment 'Права на ВМ для участника соревнований'
+			pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
 			pveum role add Competitor_ISP 2> /dev/null
-			pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback' --comment 'Права на ВМ ISP для участника соревнований'
+			pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback'
 			for ((i=$start_num+1; i<=$start_num+9; i++)) { qm pveum acl modify /vms/$((start_num+stand*100+i)) --roles Competitor --users $comp_name$stand@pve; }
- 			qm pveum acl modify /vms/$((start_num+stand*100)) --roles Competitor_ISP --users $comp_name$stand@pve;
+ 			pveum acl modify /vms/$((start_num+stand*100)) --roles Competitor_ISP --users $comp_name$stand@pve;
     			pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
 			pveum pool add $stand_name$stand
 			pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles PVEAuditor --propagate 0
