@@ -281,5 +281,5 @@ for ((stand=$switch; stand<=$switch2; stand++))
 
 }
 
-read -n 1 -p $'Удалить временный раздел со скачанными образами ВМ ('$mk_tmpfs_imgdir')? [y|д|1]: ' switch
+read -n 1 -p $'Удалить временный раздел со скачанными образами ВМ ('$mk_tmpfs_imgdir')? [y|д|1]: ' switch; echo
 [[ "$switch" =~ [yд1] ]] && ( umount -q $mk_tmpfs_imgdir; rmdir $mk_tmpfs_imgdir )
