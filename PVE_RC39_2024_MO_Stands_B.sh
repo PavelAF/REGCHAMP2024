@@ -51,10 +51,18 @@ if [[ "$switch" == 2 ]]; then
 			pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
 			pveum role add Competitor_ISP 2> /dev/null
 			pveum role modify Competitor_ISP -privs 'VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback'
-			for ((i=$start_num+1; i<=$start_num+9; i++)) { pveum acl modify /vms/$((stand*100+i)) --roles Competitor --users $comp_name$stand@pve; }
- 			pveum acl modify /vms/$((start_num+stand*100)) --roles Competitor_ISP --users $comp_name$stand@pve;
-    			pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
+
+			pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
 			pveum pool add $stand_name$stand
+			pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles PVEAuditor --propagate 0
+		
+			id=$((start_num+stand*100))
+			for i in "${!Networking[@]}"; do pveum acl modify /sdn/zones/localnetwork/vmbr$((id+i+1)) --users $comp_name$stand@pve --roles PVEAuditor; done
+   			
+			for ((i=1; i<=9; i++)) { pveum acl modify /vms/$((id+i)) --roles Competitor --users $comp_name$stand@pve; }
+ 			pveum acl modify /vms/$id --roles Competitor_ISP --users $comp_name$stand@pve;
+    		pveum user add $comp_name$stand@pve --comment 'Учетная запись участника соревнований'
+			pveum pool add $stand_name$stand --comment 'Стенд участника регионального этапа Чемпионата «Профессионалы» компетенции Сетевое и системное администрирование, модуль Б'
 			pveum acl modify /pool/$stand_name$stand --users $comp_name$stand@pve --roles PVEAuditor --propagate 0
 		}
   		[ $switch3 == 6 ] && \
