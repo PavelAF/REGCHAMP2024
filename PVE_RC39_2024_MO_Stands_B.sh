@@ -44,8 +44,8 @@ if [[ "$switch" == 2 ]]; then
 		[ $switch3 == 4 ] && pveum user delete $comp_name$stand@pve
   		[ $switch3 == 5 ] && \
 		{
-  			[ ! -z ${switch3+x} ] || { read -n 1 -p $'Занулить все права, пользователей, пулы, реалмсы? [y|д|1]: ' switch3; echo; }
-			[[ "$switch3" =~ [yд1] ]] && > /etc/pve/user.cfg
+  			[ ! -z ${switch4+x} ] || { read -n 1 -p $'Занулить все права, пользователей, пулы, реалмсы? [y|д|1]: ' switch4; echo; }
+			[[ "$switch4" =~ [yд1] ]] && > /etc/pve/user.cfg
   			[ ! -z ${start_num+x} ] || until read -p $'Ввведите начальный идентификатор ВМ: ' start_num; [[ "$start_num" =~ ^[1-9][0-9]*$ ]] && [[ $start_num -lt 3900 && $start_num -ge 100 ]]; do true;done
   			pveum role add Competitor 2> /dev/null
 			pveum role modify Competitor -privs 'Pool.Audit VM.Audit VM.Console VM.PowerMgmt VM.Snapshot.Rollback VM.Config.Network'
