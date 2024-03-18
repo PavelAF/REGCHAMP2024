@@ -66,6 +66,8 @@ if [[ "$switch" == 2 ]]; then
    			
 			for ((i=1; i<=9; i++)) { pveum acl modify /vms/$((id+i)) --roles Competitor --users $comp_name$stand@pve; }
  			pveum acl modify /vms/$id --roles Competitor_ISP --users $comp_name$stand@pve;
+
+     			pvesh set /pools/$stand_name$stand -vms "`seq -s, $id 1 $((id+9))`"
 		}
   		[ $switch3 == 6 ] && \
 		{
